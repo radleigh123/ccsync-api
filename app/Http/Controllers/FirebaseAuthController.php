@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -109,6 +110,7 @@ class FirebaseAuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|min:6|confirmed',
+            'id_number' => 'required|string|max:10|unique:users,id_school_number',
         ]);
 
         if ($validator->fails()) {
@@ -119,6 +121,9 @@ class FirebaseAuthController extends Controller
         }
 
         try {
+            // Start a database transaction
+            DB::beginTransaction();
+
             $firebaseUser = $this->firebaseAuth->createUser([
                 'email' => $request->email,
                 'password' => $request->password,
@@ -126,38 +131,62 @@ class FirebaseAuthController extends Controller
                 'emailVerified' => false,
             ]);
 
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'firebase_uid' => $firebaseUser->uid,
-                'email_verified_at' => null,
-            ]);
-
-            $customToken = $this->firebaseAuth->createCustomToken($firebaseUser->uid, [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
-            ]);
-
-            return response()->json([
-                'message' => 'User registered successfully',
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
+            try {
+                $user = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
                     'firebase_uid' => $firebaseUser->uid,
-                    'email_verified' => false,
-                ],
-                'firebase_token' => $customToken->toString(),
-                'firebase_uid' => $firebaseUser->uid,
-            ], 201);
+                    'id_school_number' => $request->id_number,
+                    'email_verified_at' => null,
+                    'role' => 'user',
+                ]);
+
+                // Commit the transaction
+                DB::commit();
+
+                $customToken = $this->firebaseAuth->createCustomToken($firebaseUser->uid, [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'name' => $user->name,
+                ]);
+
+                return response()->json([
+                    'message' => 'User registered successfully',
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'firebase_uid' => $firebaseUser->uid,
+                        'email_verified' => false,
+                        'role' => $user->role,
+                        'id_school_number' => $user->id_school_number,
+                    ],
+                    'firebase_token' => $customToken->toString(),
+                    'firebase_uid' => $firebaseUser->uid,
+                ], 201);
+            } catch (\Exception $dbException) {
+                DB::rollBack();
+
+                try {
+                    $this->firebaseAuth->deleteUser($firebaseUser->uid);
+                } catch (\Exception $deleteException) {
+                    Log::error('Failed to delete Firebase user', [
+                        'firebase_uid' => $firebaseUser->uid,
+                        'error' => $deleteException->getMessage()
+                    ]);
+                }
+
+                throw $dbException;
+            }
         } catch (AuthException $e) {
+            DB::rollBack();
             return response()->json([
                 'message' => 'Firebase registration failed',
                 'error' => $e->getMessage()
             ], 400);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'message' => 'Registration failed',
                 'error' => $e->getMessage()
@@ -198,6 +227,8 @@ class FirebaseAuthController extends Controller
                     'email' => $user->email,
                     'firebase_uid' => $firebaseUid,
                     'email_verified' => $firebaseUser->emailVerified,
+                    'role' => $user->role,
+                    'id_school_number' => $user->id_school_number,
                 ],
                 'firebase_claims' => $verifiedIdToken->claims()->all(),
             ]);

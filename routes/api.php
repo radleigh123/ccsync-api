@@ -28,6 +28,7 @@ Route::prefix('auth')->group(function () {
     // Protected auth routes (require Firebase token)
     Route::middleware('firebase.auth')->group(function () {
         Route::get('/user', [FirebaseAuthController::class, 'getUser']);
+        // FIXME: NEED UI
         Route::post('/send-email-verification', [FirebaseAuthController::class, 'sendEmailVerification']);
         Route::delete('/delete-account', [FirebaseAuthController::class, 'deleteUser']);
     });
