@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FirebaseAuthController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +43,12 @@ Route::middleware('firebase.auth')->group(function () {
             'firebase_uid' => $request->firebase_uid
         ]);
     });
+
+    Route::get('/users', [UserController::class, 'getUserList']);
+
+    Route::get('/users/id/{id}', [UserController::class, 'getUserById']);
+
+    Route::put('/users/edit-user/id/{id}', [FirebaseAuthController::class, 'editUser']);
 });
 
 // Legacy Sanctum route

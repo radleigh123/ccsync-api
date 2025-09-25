@@ -334,17 +334,62 @@ class FirebaseAuthController extends Controller
     }
 
     /**
+     * Edit user by ID from Firebase and local database
+     */
+    public function editUser(Request $request)
+    {
+        $request->validate([
+            'id_token' => 'required|string',
+            'id' => 'required|integer', // Changed from id_school_number to id
+            'email' => 'required|email',
+            'display_name' => 'required|string|max:255',
+            'id_school_number' => 'required|string|max:10',
+        ]);
+
+        try {
+            $verifiedIdToken = $this->firebaseAuth->verifyIdToken($request->id_token);
+            // Get user by ID instead of school number
+            $user = User::findOrFail($request->id);
+            $firebaseUid = $user->firebase_uid;
+
+            // Update user in Firebase
+            $this->firebaseAuth->updateUser($firebaseUid, [
+                'email' => $request->email,
+                'displayName' => $request->display_name,
+            ]);
+
+            // Update user in local database
+            $user->update([
+                'email' => $request->email,
+                'name' => $request->display_name, // Make sure this matches your column name
+                'id_school_number' => $request->id_school_number,
+            ]);
+
+            return response()->json([
+                'message' => 'User updated successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update user',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * Delete user from Firebase and local database
      */
     public function deleteUser(Request $request)
     {
         $request->validate([
             'id_token' => 'required|string',
+            'id_school_number' => 'required|string|max:10',
         ]);
 
         try {
             $verifiedIdToken = $this->firebaseAuth->verifyIdToken($request->id_token);
-            $firebaseUid = $verifiedIdToken->claims()->get('sub');
+            // $firebaseUid = $verifiedIdToken->claims()->get('sub');
+            $firebaseUid = User::where('id_school_number', $request->id_school_number)->value('firebase_uid');
 
             // Delete from Firebase
             $this->firebaseAuth->deleteUser($firebaseUid);
