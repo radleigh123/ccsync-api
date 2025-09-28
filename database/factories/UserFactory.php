@@ -30,7 +30,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'firebase_uid' => 'firebase_' . Str::random(10),
-            'id_school_number' => 'ID' . fake()->unique()->numberBetween(1000, 9999),
+            'id_school_number' => $this->generateSchoolNumber(),
             'role' => 'user', // Default role
         ];
     }
@@ -43,5 +43,16 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Generate a random 8-digit school number that starts with 19, 20, or 21.
+     * @return string
+     */
+    private function generateSchoolNumber(): string
+    {
+        $prefix = fake()->randomElement(['19', '20', '21']);
+        $suffix = fake()->numerify('######'); // 6 random digits
+        return "{$prefix}{$suffix}";
     }
 }

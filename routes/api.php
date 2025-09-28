@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\FirebaseAuthController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\MemberController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,9 +29,15 @@ Route::prefix('auth')->group(function () {
     // Protected auth routes (require Firebase token)
     Route::middleware('firebase.auth')->group(function () {
         Route::get('/user', [FirebaseAuthController::class, 'getUser']);
-        // FIXME: NEED UI
-        Route::post('/send-email-verification', [FirebaseAuthController::class, 'sendEmailVerification']);
+        Route::post('/send-email-verification', [FirebaseAuthController::class, 'sendEmailVerification']); // FIXME: NEED UI
         Route::delete('/delete-account', [FirebaseAuthController::class, 'deleteUser']);
+        Route::prefix('user')->group(function () {
+            Route::get('/', [FirebaseAuthController::class, 'getUserList']);
+
+            Route::get('/{id}', [FirebaseAuthController::class, 'getUserById']);
+
+            Route::put('/edit-user/{id}', [FirebaseAuthController::class, 'editUser']);
+        });
     });
 });
 
@@ -44,11 +50,13 @@ Route::middleware('firebase.auth')->group(function () {
         ]);
     });
 
-    Route::get('/users', [UserController::class, 'getUserList']);
-
-    Route::get('/users/id/{id}', [UserController::class, 'getUserById']);
-
-    Route::put('/users/edit-user/id/{id}', [FirebaseAuthController::class, 'editUser']);
+    /**
+     * '/' - GET/POST
+     * '/{id}' - GET
+     * '/{id}' - PUT/PATCH
+     * '/{id}' - DELETE
+     */
+    Route::apiResource('member', MemberController::class);
 });
 
 // Legacy Sanctum route
