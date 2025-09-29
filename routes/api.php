@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EventsController;
 use App\Http\Controllers\FirebaseAuthController;
 use App\Http\Controllers\MemberController;
 use Illuminate\Http\Request;
@@ -57,6 +58,15 @@ Route::middleware('firebase.auth')->group(function () {
      * '/{id}' - DELETE
      */
     Route::apiResource('member', MemberController::class);
+    Route::apiResource('events', EventsController::class);
+
+    /**
+     * Events specific routes
+     */
+    Route::prefix('events')->group(function () {
+        Route::post('/{id}/register', [EventsController::class, 'registerMember']);
+        Route::delete('/{id}/unregister/{memberId}', [EventsController::class, 'unregisterMember']);
+    });
 });
 
 // Legacy Sanctum route

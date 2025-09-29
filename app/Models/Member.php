@@ -48,4 +48,14 @@ class Member extends Model
     {
         return $this->belongsTo(Program::class, 'program', 'code');
     }
+
+    /**
+     * Get the events that the member is registered for.
+     */
+    public function events()
+    {
+        return $this->belongsToMany(Events::class, 'event_registrations', 'member_id', 'event_id')
+            ->withTimestamps()
+            ->withPivot('registered_at');
+    }
 }
