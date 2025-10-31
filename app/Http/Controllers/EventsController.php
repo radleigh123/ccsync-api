@@ -62,12 +62,12 @@ class EventsController extends Controller
 
             return response()->json([
                 'message' => 'Events retrieved successfully',
-                'data' => $events
+                'events' => $events
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error retrieving events',
-                'errors' => [$e->getMessage()]
+                'error' => [$e->getMessage()]
             ], 500);
         }
     }
@@ -103,12 +103,12 @@ class EventsController extends Controller
 
             return response()->json([
                 'message' => 'Event created successfully',
-                'data' => $event
+                'event' => $event
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error creating event',
-                'errors' => [$e->getMessage()]
+                'error' => [$e->getMessage()]
             ], 500);
         }
     }

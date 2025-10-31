@@ -110,7 +110,7 @@ class FirebaseAuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|min:6|confirmed',
-            'id_number' => 'required|string|max:10|unique:users,id_school_number',
+            'id_school_number' => 'required|string|max:10|unique:users,id_school_number',
         ]);
 
         if ($validator->fails()) {
@@ -137,19 +137,13 @@ class FirebaseAuthController extends Controller
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
                     'firebase_uid' => $firebaseUser->uid,
-                    'id_school_number' => $request->id_number,
+                    'id_school_number' => $request->id_school_number,
                     'email_verified_at' => null,
                     'role' => 'user',
                 ]);
 
                 // Commit the transaction
                 DB::commit();
-
-                $customToken = $this->firebaseAuth->createCustomToken($firebaseUser->uid, [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                    'name' => $user->name,
-                ]);
 
                 return response()->json([
                     'message' => 'User registered successfully',
@@ -162,7 +156,6 @@ class FirebaseAuthController extends Controller
                         'role' => $user->role,
                         'id_school_number' => $user->id_school_number,
                     ],
-                    'firebase_token' => $customToken->toString(),
                     'firebase_uid' => $firebaseUser->uid,
                 ], 201);
             } catch (\Exception $dbException) {
@@ -220,6 +213,7 @@ class FirebaseAuthController extends Controller
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'Token verified successfully',
                 'user' => [
                     'id' => $user->id,
@@ -234,11 +228,13 @@ class FirebaseAuthController extends Controller
             ]);
         } catch (FailedToVerifyToken $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Invalid ID token',
                 'error' => $e->getMessage()
             ], Response::HTTP_UNAUTHORIZED);
         } catch (\Exception $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Token verification failed',
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);

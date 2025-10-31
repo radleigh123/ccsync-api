@@ -62,6 +62,7 @@ class FirebaseAuthMiddleware
         } catch (FailedToVerifyToken $e) {
             return response()->json([
                 'message' => 'Invalid or expired Firebase token',
+                'token' => $idToken,
                 'error' => $e->getMessage()
             ], 401);
         } catch (\Exception $e) {
