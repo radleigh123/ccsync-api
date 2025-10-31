@@ -15,7 +15,7 @@ class FirebaseAuthMiddleware
     /**
      * Handle an incoming request.
      */
-    public function handle(Request $request, Closure $next): JsonResponse
+    public function handle(Request $request, Closure $next)
     {
         $idToken = $request->bearerToken() ?? $request->header('Firebase-Token');
 

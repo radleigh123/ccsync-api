@@ -19,7 +19,9 @@ class EventsController extends Controller
         try {
             $query = Events::with(['members:id,first_name,last_name,id_school_number']);
 
-            // Filter by status if provided
+            // TODO: finalize ERD
+            // TODO: coordinate with DB for updated status
+            // Filter by status
             if ($request->has('status')) {
                 $query->where('status', $request->status);
             }
@@ -29,7 +31,13 @@ class EventsController extends Controller
                 $query->upcoming();
             }
 
+            // Filter events on current month
+            if ($request->has('current') && $request->current == 'true') {
+                $query->thisMonth();
+            }
+
             // Filter open events
+            // hmmmmm iz redudant since we have status, but here lng sa for testing purposes
             if ($request->has('open') && $request->open == 'true') {
                 $query->open();
             }
@@ -44,8 +52,8 @@ class EventsController extends Controller
                     'description' => $event->description,
                     'venue' => $event->venue,
                     'event_date' => $event->event_date->format('Y-m-d'),
-                    'time_from' => $event->time_from,
-                    'time_to' => $event->time_to,
+                    'time_from' => $event->time_from->format('H:i:s'),
+                    'time_to' => $event->time_to->format('H:i:s'),
                     'registration_start' => $event->registration_start->format('Y-m-d'),
                     'registration_end' => $event->registration_end->format('Y-m-d'),
                     'max_participants' => $event->max_participants,
@@ -117,44 +125,46 @@ class EventsController extends Controller
      * Display the specified event
      * GET /api/events/{id}
      */
-    public function show($id)
+    public function show(string $id)
     {
         try {
-            $event = Events::with(['members:id,first_name,last_name,id_school_number,program'])
-                ->findOrFail($id);
+            $query = Events::with(['members:id,first_name,last_name,id_school_number,program'])->findOrFail($id);
 
             $eventData = [
-                'id' => $event->id,
-                'name' => $event->name,
-                'description' => $event->description,
-                'venue' => $event->venue,
-                'event_date' => $event->event_date->format('Y-m-d'),
-                'time_from' => $event->time_from,
-                'time_to' => $event->time_to,
-                'registration_start' => $event->registration_start->format('Y-m-d'),
-                'registration_end' => $event->registration_end->format('Y-m-d'),
-                'max_participants' => $event->max_participants,
-                'status' => $event->status,
-                'available_slots' => $event->available_slots,
-                'is_full' => $event->is_full,
-                'is_registration_open' => $event->is_registration_open,
-                'attendees' => $event->members->count(),
-                'members' => $event->members,
-                'created_at' => $event->created_at,
-                'updated_at' => $event->updated_at,
+                'id' => $query->id,
+                'name' => $query->name,
+                'description' => $query->description,
+                'venue' => $query->venue,
+                'event_date' => $query->event_date->format('Y-m-d'),
+                'time_from' => $query->time_from->format('H:i:s'),
+                'time_to' => $query->time_to->format('H:i:s'),
+                'registration_start' => $query->registration_start->format('Y-m-d'),
+                'registration_end' => $query->registration_end->format('Y-m-d'),
+                'max_participants' => $query->max_participants,
+                'status' => $query->status,
+                'available_slots' => $query->available_slots,
+                'is_full' => $query->is_full,
+                'is_registration_open' => $query->is_registration_open,
+                'attendees' => $query->members->count(),
+                'members' => $query->members,
+                'created_at' => $query->created_at,
+                'updated_at' => $query->updated_at,
             ];
 
             return response()->json([
+                'success' => true,
                 'message' => 'Event retrieved successfully',
-                'data' => $eventData
+                'event' => $eventData
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Event not found',
                 'errors' => ['Event with ID ' . $id . ' does not exist']
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Error retrieving event',
                 'errors' => [$e->getMessage()]
             ], 500);
@@ -334,6 +344,38 @@ class EventsController extends Controller
             return response()->json([
                 'message' => 'Error unregistering member',
                 'errors' => [$e->getMessage()]
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all members registered to event
+     */
+    public function getEventMembers(Request $request, string $id)
+    {
+        try {
+            $perPage = $request->input('per_page', 10);
+
+            $event = Events::findOrFail($id);
+            $members = $event->members()
+                ->select('first_name', 'last_name', 'year')
+                ->get();
+
+            if ($request->has('page') && $request->has('per_page')) {
+                $members = $event->members()
+                    ->select('first_name', 'last_name', 'year')
+                    ->paginate($perPage);
+            }
+
+            return response()->json([
+                'success' => true, // Redudant since response status is enough
+                'message' => 'Successfully retrieved registered members',
+                'registered_members' => $members
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error retrieving registered members',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

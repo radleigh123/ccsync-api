@@ -28,8 +28,8 @@ class Events extends Model
         'event_date' => 'date',
         'registration_start' => 'date',
         'registration_end' => 'date',
-        'time_from' => 'datetime:H:i',
-        'time_to' => 'datetime:H:i',
+        'time_from' => 'datetime',
+        'time_to' => 'datetime',
         'registered_at' => 'datetime'
     ];
 
@@ -77,6 +77,17 @@ class Events extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('event_date', '>=', now()->toDateString());
+    }
+
+    /**
+     * Scope for events on current month
+     */
+    public function scopeThisMonth($query)
+    {
+        $startOfMonth = now()->startOfMonth()->toDateString();
+        $endOfMonth = now()->endOfMonth()->toDateString();
+
+        return $query->whereBetween('event_date', [$startOfMonth, $endOfMonth])->whereYear('event_date', now()->year);
     }
 
     /**

@@ -13,7 +13,7 @@ use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
 use Kreait\Firebase\Exception\AuthException;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 
-class FirebaseAuthController extends Controller
+class UserController extends Controller
 {
     protected $firebaseAuth;
 
@@ -23,89 +23,22 @@ class FirebaseAuthController extends Controller
     }
 
     /**
-     * Login user (mainly used for testing purposes, Postman)
+     * Get all users
      */
-    public function login(Request $request)
+    public function index()
     {
-        Log::info('Login method called', ['data' => $request->all()]);
-
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email|max:255',
-            'password' => 'required|string|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $signInResult = $this->firebaseAuth->signInWithEmailAndPassword($request->email, $request->password);
-            $firebaseUser = $signInResult->data();
-
-            $firebaseUid = $firebaseUser['localId'] ?? null;
-
-            if (!$firebaseUid) {
-                return response()->json([
-                    'message' => 'Failed to retrieve Firebase UID'
-                ], 500);
-            }
-
-            $user = User::where('firebase_uid', $firebaseUid)->first();
-
-            if (!$user) {
-                return response()->json([
-                    'message' => 'User not found in local database'
-                ], 404);
-            }
-
-            $customToken = $this->firebaseAuth->createCustomToken($firebaseUid, [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
-            ]);
-
-            return response()->json([
-                'message' => 'Login successful',
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'firebase_uid' => $user->firebase_uid,
-                    'email_verified' => !is_null($user->email_verified_at),
-                ],
-                'firebase_token' => $customToken->toString(),
-                'firebase_uid' => $firebaseUid,
-            ]);
-        } catch (AuthException $e) {
-            return response()->json([
-                'message' => 'Firebase authentication failed',
-                'error' => $e->getMessage()
-            ], 401);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Login failed',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json(['users' => User::all()]);
     }
 
     /**
-     * Register a new user with Firebase Authentication and local database
+     * Store a new user with Firebase Authentication and local database
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function register(Request $request)
+    public function store(Request $request)
     {
         Log::info('Register method called', ['data' => $request->all()]);
 
-        /* $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed',
-        ]); */
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
@@ -146,6 +79,7 @@ class FirebaseAuthController extends Controller
                 DB::commit();
 
                 return response()->json([
+                    'success' => true,
                     'message' => 'User registered successfully',
                     'user' => [
                         'id' => $user->id,
@@ -165,6 +99,7 @@ class FirebaseAuthController extends Controller
                     $this->firebaseAuth->deleteUser($firebaseUser->uid);
                 } catch (\Exception $deleteException) {
                     Log::error('Failed to delete Firebase user', [
+                        'success' => false,
                         'firebase_uid' => $firebaseUser->uid,
                         'error' => $deleteException->getMessage()
                     ]);
@@ -175,18 +110,142 @@ class FirebaseAuthController extends Controller
         } catch (AuthException $e) {
             DB::rollBack();
             return response()->json([
+                'success' => false,
                 'message' => 'Firebase registration failed',
                 'error' => $e->getMessage()
             ], 400);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
+                'success' => false,
                 'message' => 'Registration failed',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
+    public function show(string $id)
+    {
+        return response()->json(['user' => User::findOrFail($id)]);
+    }
+
+    public function update(Request $request, string $id)
+    {
+        $user = User::findOrFail($id);
+        $origFirebaseUid = $user->firebase_uid;
+        $origEmail = $user->email;
+        $origName = $user->name;
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'name' => 'required|string|max:255',
+            'id_school_number' => 'required|integer|unique:members,id_school_number',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            try {
+                // Update user database
+                $user->update($validator->validated());
+
+                // Update user Firebase
+                $this->firebaseAuth->updateUser($user->firebase_uid, [
+                    'email' => $request->email,
+                    'displayName' => $request->name,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User updated successfully',
+                ]);
+            } catch (\Exception $dbException) {
+                DB::rollBack();
+
+                try {
+                    $this->firebaseAuth->updateUser($origFirebaseUid, [
+                        'email' => $origEmail,
+                        'displayName' => $origName,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to update Firebase user', [
+                        'success' => false,
+                        'firebase_uid' => $user->firebase_uid,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+
+                throw $dbException;
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete user from Firebase and local database
+     */
+    public function destroy(string $id)
+    {
+        $user = User::findOrFail($id);
+        $origEmail = $user->email;
+        $origPassword = $user->password;
+
+        try {
+            DB::beginTransaction();
+
+            try {
+                $user->delete();
+                DB::commit();
+                $this->firebaseAuth->deleteUser($user->firebase_uid);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User deleted successfully',
+                ]);
+            } catch (\Exception $dbException) {
+                DB::rollBack();
+
+                try {
+                    $this->firebaseAuth->createUserWithEmailAndPassword($origEmail, $origPassword);
+                } catch (\Exception $deleteException) {
+                    Log::error('Failed to created Firebase user', [
+                        'success' => false,
+                        'error' => $deleteException->getMessage()
+                    ]);
+                }
+
+                throw $dbException;
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Delete user failed',
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Verify firebase token from client
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function verifyToken(Request $request)
     {
         $request->validate([
@@ -354,77 +413,66 @@ class FirebaseAuthController extends Controller
     }
 
     /**
-     * Edit user by ID from Firebase and local database
+     * Login user (mainly used for testing purposes, Postman)
      */
-    public function editUser(Request $request)
+    public function login(Request $request)
     {
-        $request->validate([
-            'id_token' => 'required|string',
-            'id' => 'required|integer', // Changed from id_school_number to id
-            'email' => 'required|email',
-            'display_name' => 'required|string|max:255',
-            'id_school_number' => 'required|string|max:10',
+        Log::info('Login method called', ['data' => $request->all()]);
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email|max:255',
+            'password' => 'required|string|min:6',
         ]);
 
-        try {
-            $verifiedIdToken = $this->firebaseAuth->verifyIdToken($request->id_token);
-            // Get user by ID instead of school number
-            $user = User::findOrFail($request->id);
-            $firebaseUid = $user->firebase_uid;
-
-            // Update user in Firebase
-            $this->firebaseAuth->updateUser($firebaseUid, [
-                'email' => $request->email,
-                'displayName' => $request->display_name,
-            ]);
-
-            // Update user in local database
-            $user->update([
-                'email' => $request->email,
-                'name' => $request->display_name, // Make sure this matches your column name
-                'id_school_number' => $request->id_school_number,
-            ]);
-
+        if ($validator->fails()) {
             return response()->json([
-                'message' => 'User updated successfully',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to update user',
-                'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
         }
-    }
-
-    /**
-     * Delete user from Firebase and local database
-     */
-    public function deleteUser(Request $request)
-    {
-        $request->validate([
-            'id_token' => 'required|string',
-            'id_school_number' => 'required|string|max:10',
-        ]);
 
         try {
-            $verifiedIdToken = $this->firebaseAuth->verifyIdToken($request->id_token);
-            // $firebaseUid = $verifiedIdToken->claims()->get('sub');
-            $firebaseUid = User::where('id_school_number', $request->id_school_number)->value('firebase_uid');
+            $signInResult = $this->firebaseAuth->signInWithEmailAndPassword($request->email, $request->password);
+            $firebaseUser = $signInResult->data();
 
-            // Delete from Firebase
-            $this->firebaseAuth->deleteUser($firebaseUid);
+            $firebaseUid = $firebaseUser['localId'] ?? null;
 
-            // Delete from local database
-            User::where('firebase_uid', $firebaseUid)->delete();
+            if (!$firebaseUid) {
+                return response()->json([
+                    'message' => 'Failed to retrieve Firebase UID'
+                ], 500);
+            }
+
+            $user = User::where('firebase_uid', $firebaseUid)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User not found in local database'
+                ], 404);
+            }
 
             return response()->json([
-                'message' => 'User deleted successfully',
+                'message' => 'Login successful',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'firebase_uid' => $user->firebase_uid,
+                    'email_verified' => !is_null($user->email_verified_at),
+                ],
+                'firebase_token' => $firebaseUser,
+                'firebase_uid' => $firebaseUid,
             ]);
+        } catch (AuthException $e) {
+            return response()->json([
+                'message' => 'Firebase authentication failed',
+                'error' => $e->getMessage()
+            ], 401);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to delete user',
+                'message' => 'Login failed',
                 'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            ], 500);
         }
     }
 }

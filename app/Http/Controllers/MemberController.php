@@ -12,10 +12,31 @@ class MemberController extends Controller
     /**
      * Get all members with their programs
      */
-    public function index()
+    public function index(Request $request)
     {
-        $members = Member::with('program')->get();
-        return response()->json(['members' => $members]);
+        try {
+            $query = Member::with('program')->get();
+
+            if ($request->has('page') && $request->has('per_page')) {
+                $perPage = $request->input('per_page', 10);
+                $query = Member::with('program')->paginate($perPage);
+            }
+
+            if ($request->has('id_school_number') && $request->id_school_number > 0) {
+                // $query->where('id_school_number', $request->id_school_number);
+                $query = Member::with('program')->where('id_school_number', $request->id_school_number)->get();
+            }
+
+            return response()->json([
+                'message' => 'Members retrieved successfully',
+                'members' => $query
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error retrieving members',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -108,11 +129,45 @@ class MemberController extends Controller
     }
 
     /**
+     * Display the specified member based on id school number
+     */
+    public function getMember(Request $request)
+    {
+        try {
+            $query = Member::all()->where('id_school_number', 19125276);
+            if ($request->has('id_school_number') && $request->id_school_number > 0) {
+                $query->where('id_school_number', $request->id_school_number);
+            }
+            return response()->json($query);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => "Failed to retrieve member through id school number",
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Examine if member is registered to event
+     */
+    public function checkMemberRegistration(Request $request, string $id)
+    {
+        $query = Member::with('events')->findOrFail($id);
+        $eventId = $request->input('event_id');
+
+        $matchedEvent = $query->events->firstWhere('id', $eventId);
+
+        return response()->json([
+            'registered' => !is_null($matchedEvent),
+            'event' => $matchedEvent
+        ]);
+    }
+
+    /**
      * Get programs for dropdown
      */
     public function getPrograms()
     {
-        $programs = Program::all();
-        return response()->json(['programs' => $programs]);
+        return response()->json(['programs' => Program::all()]);
     }
 }

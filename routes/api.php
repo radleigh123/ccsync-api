@@ -1,8 +1,9 @@
 <?php
 
 use App\Http\Controllers\EventsController;
-use App\Http\Controllers\FirebaseAuthController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\MemberController;
+use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -19,46 +20,45 @@ Route::get('/register', function () {
     return response()->json(['message' => 'Register endpoint']);
 })->name('test');
 
+Route::post('/test/login', [UserController::class, 'login']);
+
 // Firebase Authentication routes
 Route::prefix('auth')->group(function () {
     // Public auth routes
-    Route::post('/login', [FirebaseAuthController::class, 'login']);
-    Route::post('/register', [FirebaseAuthController::class, 'register']);
-    Route::post('/verify-token', [FirebaseAuthController::class, 'verifyToken']);
-    Route::post('/send-password-reset', [FirebaseAuthController::class, 'sendPasswordResetEmail']);
+    Route::post('/login', [UserController::class, 'verifyToken']);
+    Route::post('/register', [UserController::class, 'store']);
+    Route::post('/send-password-reset', [UserController::class, 'sendPasswordResetEmail']);
 
     // Protected auth routes (require Firebase token)
     Route::middleware('firebase.auth')->group(function () {
-        Route::get('/user', [FirebaseAuthController::class, 'getUser']);
-        Route::post('/send-email-verification', [FirebaseAuthController::class, 'sendEmailVerification']); // FIXME: NEED UI
-        Route::delete('/delete-account', [FirebaseAuthController::class, 'deleteUser']);
-        Route::prefix('user')->group(function () {
-            Route::get('/', [FirebaseAuthController::class, 'getUserList']);
-
-            Route::get('/{id}', [FirebaseAuthController::class, 'getUserById']);
-
-            Route::put('/edit-user/{id}', [FirebaseAuthController::class, 'editUser']);
+        Route::prefix('users')->group(function () {
+            Route::get('/', [UserController::class, 'index']);
+            Route::get('/{id}', [UserController::class, 'show']);
+            Route::put('/{id}',  [UserController::class, 'update']);
+            Route::delete('/{id}',  [UserController::class, 'destroy']);
         });
+        Route::post('/send-email-verification', [UserController::class, 'sendEmailVerification']); // FIXME: NEED UI
     });
 });
 
 // Protected routes (require Firebase authentication)
 Route::middleware('firebase.auth')->group(function () {
-    Route::get('/user', function (Request $request) {
+    Route::get('/user-sanctum', function (Request $request) {
         return response()->json([
             'user' => $request->user(),
             'firebase_uid' => $request->firebase_uid
         ]);
     });
 
+    // Laravel matches routes top-to-bottom, move specific routes above the `apiResource`
+
     /**
-     * '/' - GET/POST
-     * '/{id}' - GET
-     * '/{id}' - PUT/PATCH
-     * '/{id}' - DELETE
+     * Members specific routes
      */
-    Route::apiResource('member', MemberController::class);
-    Route::apiResource('events', EventsController::class);
+    Route::prefix('members')->group(function () {
+        Route::get('/{id}/check', [MemberController::class, 'checkMemberRegistration']);
+    });
+    Route::apiResource('members', MemberController::class);
 
     /**
      * Events specific routes
@@ -66,7 +66,9 @@ Route::middleware('firebase.auth')->group(function () {
     Route::prefix('events')->group(function () {
         Route::post('/{id}/register', [EventsController::class, 'registerMember']);
         Route::delete('/{id}/unregister/{memberId}', [EventsController::class, 'unregisterMember']);
+        Route::get('/{id}/members', [EventsController::class, 'getEventMembers']);
     });
+    Route::apiResource('events', EventsController::class);
 });
 
 // Legacy Sanctum route
