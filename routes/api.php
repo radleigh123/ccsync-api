@@ -64,8 +64,8 @@ Route::middleware('firebase.auth')->group(function () {
      * Events specific routes
      */
     Route::prefix('events')->group(function () {
-        Route::post('/{id}/register', [EventsController::class, 'registerMember']);
-        Route::delete('/{id}/unregister/{memberId}', [EventsController::class, 'unregisterMember']);
+        Route::post('/{id}/add', [EventsController::class, 'registerMember']);
+        Route::delete('/{id}/delete/{memberId}', [EventsController::class, 'unregisterMember']);
         Route::get('/{id}/members', [EventsController::class, 'getEventMembers']);
     });
     Route::apiResource('events', EventsController::class);
