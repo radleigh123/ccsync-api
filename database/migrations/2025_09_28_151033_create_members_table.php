@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Gender;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,9 @@ return new class extends Migration
             $table->foreign('program')->references('code')->on('programs');
             $table->unsignedTinyInteger('year')->default(1);
             $table->boolean('is_paid')->default(false);
+            $table->enum('gender', Gender::cases())->default(Gender::OTHER);
+            $table->text('biography')->nullable();
+            $table->string('phone', 20)->unique()->nullable();
             $table->timestamps();
         });
 

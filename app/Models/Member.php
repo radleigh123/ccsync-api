@@ -26,6 +26,9 @@ class Member extends Model
         'program',
         'year',
         'is_paid',
+        'gender',
+        'biography',
+        'phone'
     ];
 
     /**

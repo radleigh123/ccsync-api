@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // Member seed
-        Member::factory(300)->create();
+        Member::factory(1000)->create();
 
         // Event seed
         // Frontend mock data

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Gender;
 use App\Models\Program;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -30,6 +31,9 @@ class MemberFactory extends Factory
             'program' => fake()->randomElement($programCodes),
             'year' => fake()->numberBetween(1, 4),
             'is_paid' => fake()->boolean(70), // 70% chance of being paid
+            'gender' => fake()->randomElement(Gender::cases()),
+            'biography' => fake()->sentence(),
+            'phone' => fake()->phoneNumber(),
         ];
     }
 
