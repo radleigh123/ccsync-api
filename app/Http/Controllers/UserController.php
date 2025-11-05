@@ -28,6 +28,8 @@ class UserController extends Controller
     public function index()
     {
         return response()->json(['users' => User::all()]);
+        // $users = User::with(['roles:id,name'])->get(); // Limiting while using eager loading
+        // return response()->json(['users' => User::with('roles')->get()]); // Obsolete, added attribute to User model.
     }
 
     /**
@@ -40,7 +42,8 @@ class UserController extends Controller
         Log::info('Register method called', ['data' => $request->all()]);
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|min:6|confirmed',
             'id_school_number' => 'required|string|max:10|unique:users,id_school_number',
@@ -54,68 +57,61 @@ class UserController extends Controller
         }
 
         try {
-            // Start a database transaction
             DB::beginTransaction();
 
+            $fullName = $request->first_name . " " . $request->last_name;
+
+            // --- FIREBASE RECORD ---
             $firebaseUser = $this->firebaseAuth->createUser([
                 'email' => $request->email,
                 'password' => $request->password,
-                'displayName' => $request->name,
+                'displayName' => $fullName,
                 'emailVerified' => false,
             ]);
 
-            try {
-                $user = User::create([
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'password' => Hash::make($request->password),
+            // --- USER DATABASE RECORD ---
+            $user = User::create([
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'firebase_uid' => $firebaseUser->uid,
+                'id_school_number' => $request->id_school_number,
+                'email_verified_at' => null,
+            ]);
+
+            // --- ROLE ASSIGNMENT (DEFAULT:STUDENT) ---
+            $user->assignRole('student');
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User registered successfully',
+                'user' => [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
                     'firebase_uid' => $firebaseUser->uid,
-                    'id_school_number' => $request->id_school_number,
-                    'email_verified_at' => null,
-                    'role' => 'user',
-                ]);
+                    'email_verified' => false,
+                    'id_school_number' => $user->id_school_number,
+                ],
+                'firebase_uid' => $firebaseUser->uid,
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
 
-                // Commit the transaction
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'User registered successfully',
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'firebase_uid' => $firebaseUser->uid,
-                        'email_verified' => false,
-                        'role' => $user->role,
-                        'id_school_number' => $user->id_school_number,
-                    ],
-                    'firebase_uid' => $firebaseUser->uid,
-                ], 201);
-            } catch (\Exception $dbException) {
-                DB::rollBack();
-
+            if (isset($firebaseUser)) {
                 try {
                     $this->firebaseAuth->deleteUser($firebaseUser->uid);
                 } catch (\Exception $deleteException) {
-                    Log::error('Failed to delete Firebase user', [
-                        'success' => false,
-                        'firebase_uid' => $firebaseUser->uid,
+                    Log::error('Failed to delete Firebase user after rollback', [
                         'error' => $deleteException->getMessage()
                     ]);
                 }
-
-                throw $dbException;
             }
-        } catch (AuthException $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Firebase registration failed',
-                'error' => $e->getMessage()
-            ], 400);
-        } catch (\Exception $e) {
-            DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Registration failed',
@@ -126,7 +122,9 @@ class UserController extends Controller
 
     public function show(string $id)
     {
-        return response()->json(['user' => User::findOrFail($id)]);
+        return response()->json([
+            'user' => User::findOrFail($id),
+        ]);
     }
 
     public function update(Request $request, string $id)
@@ -280,7 +278,6 @@ class UserController extends Controller
                     'email' => $user->email,
                     'firebase_uid' => $firebaseUid,
                     'email_verified' => $firebaseUser->emailVerified,
-                    'role' => $user->role,
                     'id_school_number' => $user->id_school_number,
                 ],
                 'firebase_claims' => $verifiedIdToken->claims()->all(),
@@ -303,9 +300,15 @@ class UserController extends Controller
     /**
      * Get user profile by Firebase UID
      */
-    public function getUser(Request $request)
+    public function getUsers(Request $request)
     {
         try {
+            if ($request->has('id_school_number') && $request->id_school_number > 0) {
+                return response()->json([
+                    'user' => User::where('id_school_number', $request->id_school_number)->get()
+                ]);
+            }
+
             $firebaseUid = $request->user()->firebase_uid ?? $request->header('Firebase-UID');
 
             if (!$firebaseUid) {
@@ -391,7 +394,7 @@ class UserController extends Controller
     public function getUserList(Request $request)
     {
         // filtered columns (not include password, remember_token, and etc.)
-        $users = User::select('id', 'name', 'email', 'email_verified_at', 'id_school_number', 'role')->get();
+        $users = User::select('id', 'name', 'email', 'email_verified_at', 'id_school_number')->get();
 
         return response()->json(['users' => $users], 200);
     }
@@ -402,7 +405,7 @@ class UserController extends Controller
     public function getUserById(Request $request, $id)
     {
         $user = User::where('id', $id)
-            ->select('id', 'name', 'email', 'email_verified_at', 'id_school_number', 'role')
+            ->select('id', 'name', 'email', 'email_verified_at', 'id_school_number')
             ->first();
 
         if (!$user) {
@@ -455,7 +458,8 @@ class UserController extends Controller
                 'message' => 'Login successful',
                 'user' => [
                     'id' => $user->id,
-                    'name' => $user->name,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
                     'email' => $user->email,
                     'firebase_uid' => $user->firebase_uid,
                     'email_verified' => !is_null($user->email_verified_at),
@@ -475,4 +479,15 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    /* public function adminDashboard(Request $request)
+    {
+        $user = $request->get('auth_user');
+
+        if ($user->hasRole('admin')) {
+            return response()->json(['message' => 'Welcome admin']);
+        }
+
+        return response()->json(['message' => 'Access denied'], 403);
+    } */
 }

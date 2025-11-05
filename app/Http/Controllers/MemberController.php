@@ -12,21 +12,11 @@ class MemberController extends Controller
     /**
      * Get all members with their programs
      */
-    public function index(Request $request)
+    public function index()
     {
         try {
-            $query = Member::with('program')->get();
-
-            if ($request->has('page') && $request->has('per_page')) {
-                $perPage = $request->input('per_page', 10);
-                $query = Member::with('program')->paginate($perPage);
-            }
-
-            if ($request->has('id_school_number') && $request->id_school_number > 0) {
-                // $query->where('id_school_number', $request->id_school_number);
-                $query = Member::with('program')->where('id_school_number', $request->id_school_number)->get();
-            }
-
+            $query = Member::all();
+            // $query = Member::with(['user'])->get();
             return response()->json([
                 'message' => 'Members retrieved successfully',
                 'members' => $query
@@ -45,6 +35,7 @@ class MemberController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'suffix' => 'nullable|string|max:50',
@@ -78,7 +69,7 @@ class MemberController extends Controller
      */
     public function show(string $id)
     {
-        $member = Member::with('program')->findOrFail($id);
+        $member = Member::with(['program', 'user'])->findOrFail($id);
         return response()->json(['member' => $member]);
     }
 
@@ -128,17 +119,46 @@ class MemberController extends Controller
         return response()->json(['message' => 'Member deleted successfully']);
     }
 
+    public function getMembersPagination(Request $request)
+    {
+        try {
+            // TODO: limit columns
+            $query = Member::with('program')->with('user')->get();
+
+            if ($request->has('page') && $request->has('per_page')) {
+                $perPage = $request->input('per_page', 10);
+                $query = Member::with('program')->paginate($perPage);
+            }
+
+            if ($request->has('id_school_number') && $request->id_school_number > 0) {
+                $query = Member::with('program')->where('id_school_number', $request->id_school_number)->get();
+            }
+
+            return response()->json([
+                'message' => 'Members retrieved successfully',
+                'members' => $query
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error retrieving members',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Display the specified member based on id school number
      */
     public function getMember(Request $request)
     {
         try {
-            $query = Member::all()->where('id_school_number', 19125276);
             if ($request->has('id_school_number') && $request->id_school_number > 0) {
-                $query->where('id_school_number', $request->id_school_number);
+                // return response()->json(Member::with(['user'])->where('id_school_number', $request->id_school_number)->get());
+                return response()->json([
+                    'member' => Member::where('id_school_number', $request->id_school_number)->get()
+                ]);
             }
-            return response()->json($query);
+            throw new \Exception('Something went wrong with ID school number');
         } catch (\Exception $e) {
             return response()->json([
                 'message' => "Failed to retrieve member through id school number",

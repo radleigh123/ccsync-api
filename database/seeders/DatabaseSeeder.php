@@ -6,7 +6,6 @@ use App\Models\Member;
 use App\Models\Program;
 use App\Models\Events;
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -16,14 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-        User::factory()->create([
-            'name' => 'ADMIN',
-            'email' => 'admin@example.com',
-            'role' => 'admin',
-        ]);
-
-        // Program seed
+        // PROGRAMS
         $programs = [
             ['code' => 'BSCS', 'name' => 'Bachelor of Science in Computer Science'],
             ['code' => 'BSIT', 'name' => 'Bachelor of Science in Information Technology'],
@@ -38,11 +30,10 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // Member seed
-        Member::factory(1000)->create();
+        // ROLES, USERS, MEMBERS
+        $this->call(UserMemberSeeder::class);
 
-        // Event seed
-        // Frontend mock data
+        // EVENTS
         $events = [
             [
                 'name' => 'CCS Acquaintance Party',
@@ -70,10 +61,9 @@ class DatabaseSeeder extends Seeder
             ]
         ];
 
+        // Register some random members to each event
         foreach ($events as $eventData) {
             $event = Events::create($eventData);
-
-            // Register some random members to each event
             $members = Member::inRandomOrder()->limit(rand(10, 50))->get();
             foreach ($members as $member) {
                 $event->members()->attach($member->id, [
@@ -82,7 +72,6 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // Random events - BUG TIME FROM AND TIME TO MAY BE INCORRECT
         Events::factory(8)->create()->each(function ($event) {
             $memberCount = rand(5, min(30, $event->max_participants));
             $members = Member::inRandomOrder()->limit($memberCount)->get();

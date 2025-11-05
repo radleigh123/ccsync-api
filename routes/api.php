@@ -3,7 +3,6 @@
 use App\Http\Controllers\EventsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MemberController;
-use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -53,9 +52,18 @@ Route::middleware('firebase.auth')->group(function () {
     // Laravel matches routes top-to-bottom, move specific routes above the `apiResource`
 
     /**
+     * Users specific routes (rare)
+     */
+    Route::prefix('users')->group(function () {
+        Route::get('/user', [UserController::class, 'getUsers']);
+    });
+
+    /**
      * Members specific routes
      */
     Route::prefix('members')->group(function () {
+        Route::get('/list', [MemberController::class, 'getMembersPagination']);
+        Route::get('/member', [MemberController::class, 'getMember']);
         Route::get('/{id}/check', [MemberController::class, 'checkMemberRegistration']);
     });
     Route::apiResource('members', MemberController::class);

@@ -35,6 +35,9 @@ class FirebaseAuthMiddleware
             // Find the local user
             $user = User::where('firebase_uid', $firebaseUid)->first();
 
+            // Add/Override data in current HTTP request object
+            $request->merge(['auth_user' => $user]);
+
             if (!$user && $firebaseUser->email) {
                 // Optionally create user if not exists
                 $user = User::create([

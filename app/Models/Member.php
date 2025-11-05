@@ -16,6 +16,7 @@ class Member extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_id',
         'first_name',
         'last_name',
         'suffix',
@@ -28,7 +29,7 @@ class Member extends Model
         'is_paid',
         'gender',
         'biography',
-        'phone'
+        'phone',
     ];
 
     /**
@@ -45,7 +46,17 @@ class Member extends Model
     }
 
     /**
+     * The attributes that are included to model.
+     * @var array
+     */
+    protected $with = [
+        'program',
+        'user'
+    ];
+
+    /**
      * Get the program that the member belongs to.
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Program, Member>
      */
     public function program()
     {
@@ -60,5 +71,15 @@ class Member extends Model
         return $this->belongsToMany(Events::class, 'event_registrations', 'member_id', 'event_id')
             ->withTimestamps()
             ->withPivot('registered_at');
+    }
+
+    /**
+     * OPTIONAL inverse to User.
+     * Get the user associated to the member.
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, Member>
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

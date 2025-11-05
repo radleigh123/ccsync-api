@@ -18,8 +18,6 @@ class MemberFactory extends Factory
      */
     public function definition(): array
     {
-        $programCodes = ['BSCS', 'BSIT', 'BSIS', 'BSCE'];
-
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
@@ -28,7 +26,7 @@ class MemberFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'birth_date' => fake()->dateTimeBetween('-30 years', '-15 years')->format('Y-m-d'),
             'enrollment_date' => fake()->dateTimeBetween('-4 years', 'now')->format('Y-m-d'),
-            'program' => fake()->randomElement($programCodes),
+            'program' => fake()->randomElement(['BSCS', 'BSIT', 'BSIS', 'BSCE']),
             'year' => fake()->numberBetween(1, 4),
             'is_paid' => fake()->boolean(70), // 70% chance of being paid
             'gender' => fake()->randomElement(Gender::cases()),
@@ -43,7 +41,7 @@ class MemberFactory extends Factory
      */
     private function generateSchoolNumber(): string
     {
-        $prefix = fake()->randomElement(['19', '20', '21']);
+        $prefix = fake()->randomElement(['17', '18', '19', '20', '21']);
         $suffix = fake()->numerify('######'); // 6 random digits
         return "{$prefix}{$suffix}";
     }
