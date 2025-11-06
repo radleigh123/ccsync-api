@@ -28,16 +28,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [UserController::class, 'store']);
     Route::post('/send-password-reset', [UserController::class, 'sendPasswordResetEmail']);
 
-    // Protected auth routes (require Firebase token)
-    Route::middleware('firebase.auth')->group(function () {
-        Route::prefix('users')->group(function () {
-            Route::get('/', [UserController::class, 'index']);
-            Route::get('/{id}', [UserController::class, 'show']);
-            Route::put('/{id}',  [UserController::class, 'update']);
-            Route::delete('/{id}',  [UserController::class, 'destroy']);
-        });
-        Route::post('/send-email-verification', [UserController::class, 'sendEmailVerification']); // FIXME: NEED UI
-    });
+    Route::post('/send-email-verification', [UserController::class, 'sendEmailVerification'])
+        ->middleware('firebase.auth'); // FIXME: NEED UI
 });
 
 // Protected routes (require Firebase authentication)
@@ -55,18 +47,33 @@ Route::middleware('firebase.auth')->group(function () {
      * Users specific routes (rare)
      */
     Route::prefix('users')->group(function () {
-        Route::get('/user', [UserController::class, 'getUsers']);
+        Route::get('/user', [UserController::class, 'getUserById']);
+        // Route::get('/', [UserController::class, 'index']);
+        // Route::get('/{id}', [UserController::class, 'show']);
+        // Route::put('/{id}',  [UserController::class, 'update']);
+        // Route::delete('/{id}',  [UserController::class, 'destroy']);
     });
+    Route::apiResource('users', UserController::class);
 
     /**
      * Members specific routes
      */
     Route::prefix('members')->group(function () {
         Route::get('/list', [MemberController::class, 'getMembersPagination']);
+        Route::get('/get', [MemberController::class, 'promoteMember']);
         Route::get('/member', [MemberController::class, 'getMember']);
         Route::get('/{id}/check', [MemberController::class, 'checkMemberRegistration']);
     });
     Route::apiResource('members', MemberController::class);
+
+    /**
+     * Profile specific routes
+     */
+    Route::prefix('profile')->group(function () {
+        Route::put('/{id}/editProfileInfo', [UserController::class, 'updateProfileInformation']);
+        Route::put('/{id}/editPersonal', [UserController::class, 'updatePersonal']);
+        Route::put('/{id}/editPassword', [UserController::class, 'updatePassword']);
+    });
 
     /**
      * Events specific routes

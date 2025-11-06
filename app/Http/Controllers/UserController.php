@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Gender;
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -9,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Enum;
 use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
 use Kreait\Firebase\Exception\AuthException;
 use Kreait\Laravel\Firebase\Facades\Firebase;
@@ -42,8 +45,7 @@ class UserController extends Controller
         Log::info('Register method called', ['data' => $request->all()]);
 
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'display_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|min:6|confirmed',
             'id_school_number' => 'required|string|max:10|unique:users,id_school_number',
@@ -59,20 +61,17 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
-            $fullName = $request->first_name . " " . $request->last_name;
-
             // --- FIREBASE RECORD ---
             $firebaseUser = $this->firebaseAuth->createUser([
+                'displayName' => $request->display_name,
                 'email' => $request->email,
                 'password' => $request->password,
-                'displayName' => $fullName,
                 'emailVerified' => false,
             ]);
 
             // --- USER DATABASE RECORD ---
             $user = User::create([
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
+                'display_name' => $request->display_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'firebase_uid' => $firebaseUser->uid,
@@ -90,14 +89,12 @@ class UserController extends Controller
                 'message' => 'User registered successfully',
                 'user' => [
                     'id' => $user->id,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
+                    'display_name' => $user->display_name,
                     'email' => $user->email,
                     'firebase_uid' => $firebaseUser->uid,
                     'email_verified' => false,
                     'id_school_number' => $user->id_school_number,
-                ],
-                'firebase_uid' => $firebaseUser->uid,
+                ]
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -123,7 +120,8 @@ class UserController extends Controller
     public function show(string $id)
     {
         return response()->json([
-            'user' => User::findOrFail($id),
+            // 'user' => User::findOrFail($id),
+            'user' => User::with('member')->findOrFail($id)
         ]);
     }
 
@@ -132,11 +130,11 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $origFirebaseUid = $user->firebase_uid;
         $origEmail = $user->email;
-        $origName = $user->name;
+        $origDisplayName = $user->display_name;
 
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
-            'name' => 'required|string|max:255',
+            'display_name' => 'required|string|max:255',
             'id_school_number' => 'required|integer|unique:members,id_school_number',
         ]);
 
@@ -156,9 +154,9 @@ class UserController extends Controller
                 $user->update($validator->validated());
 
                 // Update user Firebase
-                $this->firebaseAuth->updateUser($user->firebase_uid, [
+                $this->firebaseAuth->updateUser($origFirebaseUid, [
                     'email' => $request->email,
-                    'displayName' => $request->name,
+                    'displayName' => $request->display_name,
                 ]);
 
                 DB::commit();
@@ -173,12 +171,12 @@ class UserController extends Controller
                 try {
                     $this->firebaseAuth->updateUser($origFirebaseUid, [
                         'email' => $origEmail,
-                        'displayName' => $origName,
+                        'displayName' => $origDisplayName,
                     ]);
                 } catch (\Exception $e) {
                     Log::error('Failed to update Firebase user', [
                         'success' => false,
-                        'firebase_uid' => $user->firebase_uid,
+                        'firebase_uid' => $origFirebaseUid,
                         'error' => $e->getMessage()
                     ]);
                 }
@@ -261,7 +259,7 @@ class UserController extends Controller
 
             if (!$user) {
                 $user = User::create([
-                    'name' => $firebaseUser->displayName ?? 'Unknown User',
+                    'display_name' => $firebaseUser->displayName ?? 'Unknown User',
                     'email' => $firebaseUser->email,
                     'password' => Hash::make(uniqid()),
                     'firebase_uid' => $firebaseUid,
@@ -274,7 +272,7 @@ class UserController extends Controller
                 'message' => 'Token verified successfully',
                 'user' => [
                     'id' => $user->id,
-                    'name' => $user->name,
+                    'display_name' => $user->display_name,
                     'email' => $user->email,
                     'firebase_uid' => $firebaseUid,
                     'email_verified' => $firebaseUser->emailVerified,
@@ -298,14 +296,32 @@ class UserController extends Controller
     }
 
     /**
-     * Get user profile by Firebase UID
+     * Get user profile by ID School Number or Firebase UID
      */
-    public function getUsers(Request $request)
+    public function getUserById(Request $request)
     {
         try {
             if ($request->has('id_school_number') && $request->id_school_number > 0) {
+                $user = User::with(['member' => function ($query) {
+                    $query->select(
+                        'user_id',
+                        'first_name',
+                        'last_name',
+                        'suffix',
+                        'birth_date',
+                        'enrollment_date',
+                        'program',
+                        'year',
+                        'is_paid',
+                        'gender',
+                        'biography',
+                        'phone'
+                    );
+                }])
+                    ->where('id_school_number', $request->id_school_number)
+                    ->first();
                 return response()->json([
-                    'user' => User::where('id_school_number', $request->id_school_number)->get()
+                    'user' => $user
                 ]);
             }
 
@@ -394,25 +410,9 @@ class UserController extends Controller
     public function getUserList(Request $request)
     {
         // filtered columns (not include password, remember_token, and etc.)
-        $users = User::select('id', 'name', 'email', 'email_verified_at', 'id_school_number')->get();
+        $users = User::select('id', 'display_name', 'email', 'email_verified_at', 'id_school_number')->get();
 
         return response()->json(['users' => $users], 200);
-    }
-
-    /**
-     * Get a specific user by database ID
-     */
-    public function getUserById(Request $request, $id)
-    {
-        $user = User::where('id', $id)
-            ->select('id', 'name', 'email', 'email_verified_at', 'id_school_number')
-            ->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-
-        return response()->json(['user' => $user], 200);
     }
 
     /**
@@ -458,14 +458,12 @@ class UserController extends Controller
                 'message' => 'Login successful',
                 'user' => [
                     'id' => $user->id,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
+                    'display_name' => $user->display_name,
                     'email' => $user->email,
                     'firebase_uid' => $user->firebase_uid,
                     'email_verified' => !is_null($user->email_verified_at),
                 ],
-                'firebase_token' => $firebaseUser,
-                'firebase_uid' => $firebaseUid,
+                'firebase_user' => $firebaseUser,
             ]);
         } catch (AuthException $e) {
             return response()->json([
@@ -490,4 +488,223 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Access denied'], 403);
     } */
+
+    // --- Profile Page ---
+
+    public function updateProfileInformation(Request $request, string $id)
+    {
+        $user = User::with('member')->findOrFail($id);
+
+        $firebaseUid = $user->firebase_uid;
+        $origDisplayName = $user->display_name;
+
+        $validator = Validator::make($request->all(), [
+            'display_name' => 'max:255|string',
+            'biography' => 'max:255|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            try {
+                // Update user database
+                $user->update(['display_name' => $request->display_name]);
+                $user->member->update(['biography' => $request->biography]);
+
+                // Update user Firebase
+                $this->firebaseAuth->updateUser($firebaseUid, [
+                    'displayName' => $request->display_name,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User & Member updated successfully',
+                    'user' => $user->getChanges(),
+                    'member' => $user->member->getChanges()
+                ]);
+            } catch (\Exception $dbException) {
+                DB::rollBack();
+
+                try {
+                    $this->firebaseAuth->updateUser($firebaseUid, [
+                        'displayName' => $origDisplayName,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to update Firebase user', [
+                        'success' => false,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+
+                throw $dbException;
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updatePersonal(Request $request, string $id)
+    {
+        $user = User::with('member')->findOrFail($id);
+        $firebaseUid = $user->firebase_uid;
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'max:255|string',
+            'phone' => 'max:255|string',
+            'gender' => [new Enum(Gender::class)]
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            try {
+                $validatedData = $validator->validated();
+
+                // Update user database
+                $user->update(['email' => $validatedData['email']]);
+                $user->member->update($validatedData);
+
+                // Update user Firebase
+                $this->firebaseAuth->updateUser($firebaseUid, [
+                    'email' => $validatedData['email'],
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User & Member updated successfully',
+                    'user' => [
+                        $user->getPrevious(),
+                        $user->getChanges()
+                    ],
+                    'member' => [
+                        $user->member->getPrevious(),
+                        $user->member->getChanges(),
+                    ],
+                ]);
+            } catch (\Exception $dbException) {
+                DB::rollBack();
+
+                try {
+                    $this->firebaseAuth->updateUser($firebaseUid, [
+                        'email' => $user->getOriginal('email'),
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to update Firebase user', [
+                        'success' => false,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+
+                throw $dbException;
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updatePassword(Request $request, string $id)
+    {
+        $user = User::findOrFail($id);
+        $firebaseUid = $user->firebase_uid;
+
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|min:6|string',
+            'password' => 'required|min:6|confirmed'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Current password is not correct.',
+            ], 401);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            try {
+                $validatedData = $validator->validated();
+
+                // Update user database
+                $user->update(['password' => Hash::make($validatedData['password'])]);
+
+                // Update user password Firebase
+                /* $this->firebaseAuth->updateUser($firebaseUid, [
+                    'password' => $validatedData['password'],
+                ]); */
+                $this->firebaseAuth->changeUserPassword($firebaseUid, $validatedData['password']);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Password updated successfully',
+                    'user' => [
+                        $user->getPrevious(),
+                        $user->getChanges()
+                    ],
+                ]);
+            } catch (\Exception $dbException) {
+                DB::rollBack();
+
+                try {
+                    $this->firebaseAuth->updateUser($firebaseUid, [
+                        'password' => $request->current_password,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to update Firebase user', [
+                        'success' => false,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+
+                throw $dbException;
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

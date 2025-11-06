@@ -23,7 +23,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('first_name');
-            $table->string('last_name');
+            $table->string('last_name')->nullable();
             $table->string('suffix', 50)->nullable();
             $table->unsignedInteger('id_school_number')->unique();
             $table->string('email')->unique()->nullable();

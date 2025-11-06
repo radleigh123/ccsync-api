@@ -17,7 +17,7 @@ class EventsController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Events::with(['members:id,first_name,last_name,id_school_number']);
+            $query = Events::with(['members:id,user_id,first_name,last_name,id_school_number,program']);
 
             // TODO: finalize ERD
             // TODO: coordinate with DB for updated status
@@ -75,7 +75,7 @@ class EventsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error retrieving events',
-                'error' => [$e->getMessage()]
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -357,13 +357,15 @@ class EventsController extends Controller
             $perPage = $request->input('per_page', 10);
 
             $event = Events::findOrFail($id);
+            // $query = Events::with(['members:id,user_id,first_name,last_name,id_school_number,program']);
+            // $event = Events::with(['members:id,user_id,program'])->findOrFail($id);
             $members = $event->members()
-                ->select('first_name', 'last_name', 'year')
+                ->select('first_name', 'last_name', 'year', 'program')
                 ->get();
 
             if ($request->has('page') && $request->has('per_page')) {
                 $members = $event->members()
-                    ->select('first_name', 'last_name', 'year')
+                    ->select('first_name', 'last_name', 'year', 'program')
                     ->paginate($perPage);
             }
 

@@ -23,10 +23,11 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $userName = fake()->unique()->userName();
+
         return [
-            'first_name' => fake()->firstName(),
-            'last_name' => fake()->lastName(),
-            'email' => fake()->unique()->safeEmail(),
+            'display_name' => $userName,
+            'email' => $this->generateEmail($userName),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -54,5 +55,17 @@ class UserFactory extends Factory
         $prefix = fake()->randomElement(['19', '20', '21']);
         $suffix = fake()->numerify('######'); // 6 random digits
         return "{$prefix}{$suffix}";
+    }
+
+    /**
+     * Generae a random email domain added to the username.
+     * @param string $userName
+     * @return string
+     */
+    private function generateEmail(string $userName): string
+    {
+        $domain = fake()->safeEmailDomain();
+        $suffix = fake()->randomNumber(3);
+        return "{$userName}{$suffix}@{$domain}";
     }
 }

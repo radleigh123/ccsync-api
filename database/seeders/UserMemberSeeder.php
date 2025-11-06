@@ -87,8 +87,7 @@ class UserMemberSeeder extends Seeder
             ->syncPermissions(Permission::all());
 
         $student = User::factory()->create([
-            'first_name' => 'Student',
-            'last_name' => 'Member',
+            'display_name' => 'Student Student',
             'email' => 'localstudent@student.com',
         ]);
         $student->assignRole($studentRole);
@@ -99,8 +98,7 @@ class UserMemberSeeder extends Seeder
         ]);
 
         $officer = User::factory()->create([
-            'first_name' => 'Officer',
-            'last_name' => 'Member',
+            'display_name' => 'Officer Officer',
             'email' => 'localofficer@officer.com',
         ]);
         $officer->assignRole($officerRole);
@@ -111,8 +109,7 @@ class UserMemberSeeder extends Seeder
         ]);
 
         $admin = User::factory()->create([
-            'first_name' => 'Administrator',
-            'last_name' => 'User',
+            'display_name' => 'Administrator Administrator',
             'email' => 'localadmin@admin.com',
         ]);
         $admin->assignRole($adminRole);
@@ -128,8 +125,8 @@ class UserMemberSeeder extends Seeder
 
             Member::factory()->create([
                 'user_id' => $user->id,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
+                'first_name' => $user->display_name,
+                'last_name' => fake()->name(),
                 'id_school_number' => $user->id_school_number,
                 'email' => $user->email,
             ]);
@@ -141,8 +138,7 @@ class UserMemberSeeder extends Seeder
 
             Member::factory()->create([
                 'user_id' => $user->id,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
+                'first_name' => $user->display_name,
                 'id_school_number' => $user->id_school_number,
                 'email' => $user->email,
             ]);

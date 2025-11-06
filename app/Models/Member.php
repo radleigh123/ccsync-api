@@ -51,7 +51,6 @@ class Member extends Model
      */
     protected $with = [
         'program',
-        'user'
     ];
 
     /**

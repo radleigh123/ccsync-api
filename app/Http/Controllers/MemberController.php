@@ -190,4 +190,18 @@ class MemberController extends Controller
     {
         return response()->json(['programs' => Program::all()]);
     }
+
+    public function promoteMember(Request $request)
+    {
+        $user = $request->user();
+        if ($user->hasAnyRole(['officer', 'admin'])) {
+            return response()->json([
+                'user' => $user
+            ]);
+        }
+
+        return response()->json([
+            'user' => $user->can('view members')
+        ]);
+    }
 }
