@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Member;
 use App\Models\Program;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,12 +16,7 @@ class MemberController extends Controller
     public function index()
     {
         try {
-            $query = Member::all();
-            // $query = Member::with(['user'])->get();
-            return response()->json([
-                'message' => 'Members retrieved successfully',
-                'members' => $query
-            ]);
+            return response()->json(['members' => Member::all()]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error retrieving members',
@@ -35,7 +31,6 @@ class MemberController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required|integer',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'suffix' => 'nullable|string|max:50',
@@ -55,7 +50,13 @@ class MemberController extends Controller
             ], 422);
         }
 
-        $member = Member::create($request->all());
+        // load user_id and semester_id (localStorage) from request
+        $user = User::findOrFail($request->user_id);
+
+        $member = Member::create([
+            ...$request->all(),
+            'user_id' => $user->id,
+        ]);
         $member->load('program');
 
         return response()->json([
@@ -69,8 +70,7 @@ class MemberController extends Controller
      */
     public function show(string $id)
     {
-        $member = Member::with(['program', 'user'])->findOrFail($id);
-        return response()->json(['member' => $member]);
+        return response()->json(['member' => Member::findOrFail($id)]);
     }
 
     /**
@@ -191,17 +191,68 @@ class MemberController extends Controller
         return response()->json(['programs' => Program::all()]);
     }
 
-    public function promoteMember(Request $request)
+    // --- Promotion logic ---
+
+    /**
+     * Assign a new role to a member (student)
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function promoteMember(Request $request, string $id)
     {
         $user = $request->user();
-        if ($user->hasAnyRole(['officer', 'admin'])) {
+        $memberId = $id;
+        $newRole = $request->input('role');
+
+        if (! $user->hasAnyRole(['officer', 'admin'])) {
             return response()->json([
-                'user' => $user
-            ]);
+                'message' => 'Unauthorized: Only officers or admins can promote members.'
+            ], 403);
         }
 
+        $member = Member::with('user')->findOrFail($memberId);
+        $student = $member->user;
+
+        if ($user->hasRole('officer') && $newRole === 'admin') {
+            return response()->json([
+                'message' => 'Officers cannot promote members to admin.'
+            ], 403);
+        }
+
+        $student->syncRoles([$newRole]); // remove previous, assign new
+
         return response()->json([
-            'user' => $user->can('view members')
+            'message' => "Member promoted to {$newRole} successfully.",
+            'member' => $member->load('user')
+        ]);
+    }
+
+    public function demoteOfficer(Request $request, string $id)
+    {
+        $user = $request->user();
+        $memberId = $id;
+        $newRole = $request->input('role');
+
+        if (! $user->hasRole('admin')) {
+            return response()->json([
+                'message' => 'Unauthorized: Only admins can demote officer.'
+            ], 403);
+        }
+
+        $member = Member::with('user')->findOrFail($memberId);
+        $officer = $member->user;
+
+        if ($newRole === 'admin') {
+            return response()->json([
+                'message' => 'Cannot demote to admin.'
+            ], 403);
+        }
+
+        $officer->syncRoles([$newRole]); // remove previous, assign new
+
+        return response()->json([
+            'message' => "Officer demoted to {$newRole} successfully.",
+            'member' => $member->load('user')
         ]);
     }
 }

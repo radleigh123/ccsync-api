@@ -13,29 +13,32 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('programs', function (Blueprint $table) {
-            $table->string('code')->primary();
-            $table->string('name');
-            $table->timestamps();
-        });
-
         Schema::create('members', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->string('first_name');
+            $table->string('middle_name');
             $table->string('last_name')->nullable();
             $table->string('suffix', 50)->nullable();
             $table->unsignedInteger('id_school_number')->unique();
-            $table->string('email')->unique()->nullable();
             $table->date('birth_date');
             $table->date('enrollment_date');
+
+            // since there is no "id" column on programs table
             $table->string('program');
             $table->foreign('program')->references('code')->on('programs');
+
             $table->unsignedTinyInteger('year')->default(1);
             $table->boolean('is_paid')->default(false);
             $table->enum('gender', Gender::cases())->default(Gender::OTHER);
             $table->text('biography')->nullable();
             $table->string('phone', 20)->unique()->nullable();
+            $table->foreignId('semester_id')->nullable()
+                ->constrained()
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->timestamps();
         });
 
@@ -48,6 +51,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('members');
-        Schema::dropIfExists('programs');
     }
 };

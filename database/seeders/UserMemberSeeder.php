@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Member;
+use App\Models\Semester;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
@@ -22,6 +23,7 @@ class UserMemberSeeder extends Seeder
             'add members',
             'edit members',
             'delete members',
+            'promote members',
 
             // Events
             'view events',
@@ -83,6 +85,8 @@ class UserMemberSeeder extends Seeder
                 'delete requirements',
             ]);
 
+        $semester = Semester::orderByDesc('id')->first();
+
         $adminRole = Role::firstOrCreate(['name' => 'admin'])
             ->syncPermissions(Permission::all());
 
@@ -92,9 +96,10 @@ class UserMemberSeeder extends Seeder
         ]);
         $student->assignRole($studentRole);
         Member::factory()->create([
-            'user_id' => $student->id,
-            'first_name' => 'Student',
+            'user_id' => $student,
+            'first_name' => $student->display_name,
             'last_name' => 'Member',
+            'semester_id' => $semester,
         ]);
 
         $officer = User::factory()->create([
@@ -103,32 +108,43 @@ class UserMemberSeeder extends Seeder
         ]);
         $officer->assignRole($officerRole);
         Member::factory()->create([
-            'user_id' => $officer->id,
-            'first_name' => 'Officer',
+            'user_id' => $officer,
+            'first_name' => $officer->display_name,
             'last_name' => 'Member',
+            'semester_id' => $semester,
         ]);
 
         $admin = User::factory()->create([
-            'display_name' => 'Administrator Administrator',
-            'email' => 'localadmin@admin.com',
+            'display_name' => 'Administrator',
+            'email' => 'keaneradleigh@gmail.com',
+            'password' => '123456',
+            'firebase_uid' => 'bT1oLwJqcZbR9uMbTjvMRA8EHcv2',
         ]);
         $admin->assignRole($adminRole);
         Member::factory()->create([
-            'user_id' => $admin->id,
-            'first_name' => 'Administrator',
-            'last_name' => 'User',
+            'user_id' => $admin,
+            'first_name' => $admin->display_name,
+            'middle_name' => 'Konnichiwa',
+            'last_name' => 'President',
+            'enrollment_date' => date('2021-09-06'),
+            'year' => 4,
+            'is_paid' => true,
+            'semester_id' => $semester,
         ]);
 
         // --- Bulk random students ---
         User::factory(500)->create()->each(function ($user) use ($studentRole) {
             $user->assignRole($studentRole);
 
+            $year = fake()->numberBetween(1, 4);
+            $enrollmentDate = date("Y-m-d", strtotime("- {$year} years", strtotime("06 September")));
+
             Member::factory()->create([
-                'user_id' => $user->id,
+                'user_id' => $user,
                 'first_name' => $user->display_name,
-                'last_name' => fake()->name(),
-                'id_school_number' => $user->id_school_number,
-                'email' => $user->email,
+                'enrollment_date' => $enrollmentDate,
+                'year' => $year,
+                'semester_id' => Semester::orderByDesc('id')->first(),
             ]);
         });
 
@@ -136,11 +152,15 @@ class UserMemberSeeder extends Seeder
         User::factory(30)->create()->each(function ($user) use ($officerRole) {
             $user->assignRole($officerRole);
 
+            $year = fake()->numberBetween(1, 4);
+            $enrollmentDate = date("Y-m-d", strtotime("- {$year} years", strtotime("06 September")));
+
             Member::factory()->create([
-                'user_id' => $user->id,
+                'user_id' => $user,
                 'first_name' => $user->display_name,
-                'id_school_number' => $user->id_school_number,
-                'email' => $user->email,
+                'enrollment_date' => $enrollmentDate,
+                'year' => $year,
+                'semester_id' => Semester::orderByDesc('id')->first(),
             ]);
         });
 

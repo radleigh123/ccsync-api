@@ -8,6 +8,7 @@ use Kreait\Laravel\Firebase\Facades\Firebase;
 use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class FirebaseAuthMiddleware
@@ -37,6 +38,7 @@ class FirebaseAuthMiddleware
 
             // Add/Override data in current HTTP request object
             $request->merge(['auth_user' => $user]);
+            Auth::login($user);
 
             if (!$user && $firebaseUser->email) {
                 // Optionally create user if not exists

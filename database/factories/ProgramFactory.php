@@ -3,9 +3,10 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Program;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Program>
+ * @extends Factory<Program>
  */
 class ProgramFactory extends Factory
 {

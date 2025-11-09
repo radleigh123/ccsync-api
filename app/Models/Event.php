@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Enums\Status;
+use Carbon\Carbon;
+use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Events extends Model
+class Event extends Model
 {
-    /** @use HasFactory<\Database\Factories\EventsFactory> */
+    /** @use HasFactory<EventFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -25,12 +29,13 @@ class Events extends Model
     ];
 
     protected $casts = [
-        'event_date' => 'date',
+        'event_date' => 'date:Y-m-d',
         'registration_start' => 'date',
         'registration_end' => 'date',
         'time_from' => 'datetime',
         'time_to' => 'datetime',
-        'registered_at' => 'datetime'
+        'registered_at' => 'datetime',
+        'status' => Status::class,
     ];
 
     /**
@@ -41,6 +46,11 @@ class Events extends Model
         return $this->belongsToMany(Member::class, 'event_registrations', 'event_id', 'member_id')
             ->withTimestamps()
             ->withPivot('registered_at');
+    }
+
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class);
     }
 
     /**
@@ -64,11 +74,20 @@ class Events extends Model
      */
     public function getIsRegistrationOpenAttribute(): bool
     {
-        $now = now()->toDateString();
-        return $this->status === 'open'
-            && $now >= $this->registration_start->toDateString()
-            && $now <= $this->registration_end->toDateString()
+        $now = now();
+        return $this->status === Status::OPEN
+            && $now->gte(Carbon::parse($this->registration_start))
+            && $now->lte(Carbon::parse($this->registration_end))
             && $this->available_slots > 0;
+    }
+
+    public function getRegistrationDueAttribute(): int
+    {
+        $now = now();
+        $registrationEnd = Carbon::parse($this->registration_end);
+        $daysRemaining = $now->diffInDays($registrationEnd);
+        if ($daysRemaining < 0) return -1;
+        return $daysRemaining;
     }
 
     /**

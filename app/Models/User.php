@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Enums\Gender;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use
         HasFactory,
         Notifiable,
@@ -29,7 +28,6 @@ class User extends Authenticatable
         'email',
         'password',
         'firebase_uid',
-        'id_school_number'
     ];
 
     // Spatie
@@ -50,11 +48,22 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
+        'email_verified_at',
         'password',
+        'firebase_uid',
         'remember_token',
         'roles',
         'permissions',
-        'pivot'
+        'pivot',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
+     * The relations to eager load on every query.
+     * @var array
+     */
+    protected $with = [
     ];
 
     /**

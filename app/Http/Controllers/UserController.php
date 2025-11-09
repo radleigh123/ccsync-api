@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Gender;
-use App\Models\Member;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -31,8 +30,6 @@ class UserController extends Controller
     public function index()
     {
         return response()->json(['users' => User::all()]);
-        // $users = User::with(['roles:id,name'])->get(); // Limiting while using eager loading
-        // return response()->json(['users' => User::with('roles')->get()]); // Obsolete, added attribute to User model.
     }
 
     /**
@@ -119,10 +116,7 @@ class UserController extends Controller
 
     public function show(string $id)
     {
-        return response()->json([
-            // 'user' => User::findOrFail($id),
-            'user' => User::with('member')->findOrFail($id)
-        ]);
+        return response()->json(['user' => User::findOrFail($id)]);
     }
 
     public function update(Request $request, string $id)
@@ -256,16 +250,6 @@ class UserController extends Controller
             $firebaseUser = $this->firebaseAuth->getUser($firebaseUid);
 
             $user = User::where('firebase_uid', $firebaseUid)->first();
-
-            if (!$user) {
-                $user = User::create([
-                    'display_name' => $firebaseUser->displayName ?? 'Unknown User',
-                    'email' => $firebaseUser->email,
-                    'password' => Hash::make(uniqid()),
-                    'firebase_uid' => $firebaseUid,
-                    'email_verified_at' => $firebaseUser->emailVerified ? now() : null,
-                ]);
-            }
 
             return response()->json([
                 'success' => true,

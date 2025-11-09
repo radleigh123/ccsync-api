@@ -2,27 +2,18 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Status;
+use App\Models\Event;
+use App\Models\Member;
+use App\Models\Semester;
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
+class EventSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // PROGRAMS
-        $this->call(ProgramSeeder::class);
-
-        // SEMESTERS (starting year 2021)
-        $this->call(SemesterSeeder::class);
-
-        // ROLES, USERS, MEMBERS
-        $this->call(UserMemberSeeder::class);
-
-        // EVENTS
-        $this->call(EventSeeder::class);
-        /* $events = [
+        $semester = Semester::orderByDesc('id')->first();
+        $events = [
             [
                 'name' => 'CCS Acquaintance Party',
                 'description' => 'A casual gathering to get to know each other.',
@@ -33,7 +24,8 @@ class DatabaseSeeder extends Seeder
                 'registration_start' => '2024-06-01',
                 'registration_end' => '2024-06-30',
                 'max_participants' => 150,
-                'status' => 'open'
+                'status' => Status::OPEN,
+                'semester_id' => $semester->id,
             ],
             [
                 'name' => 'Intramurals',
@@ -45,17 +37,21 @@ class DatabaseSeeder extends Seeder
                 'registration_start' => '2024-06-01',
                 'registration_end' => '2024-07-04',
                 'max_participants' => 300,
-                'status' => 'open'
+                'status' => Status::OPEN,
+                'semester_id' => $semester->id,
             ]
         ];
 
         // Register some random members to each event
         foreach ($events as $eventData) {
             $event = Event::create($eventData);
-            $members = Member::inRandomOrder()->limit(rand(10, 50))->get();
+            $members = Member::inRandomOrder()->limit(rand(30, 100))->get();
             foreach ($members as $member) {
-                $event->members()->attach($member->id, [
+                /* $event->members()->attach($member->id, [
                     'registered_at' => now()->subDays(rand(1, 30))
+                ]); */
+                $event->members()->syncWithoutDetaching([
+                    $member->id => ['registered_at' => now()->subDays(rand(1, 30))]
                 ]);
             }
         }
@@ -69,6 +65,6 @@ class DatabaseSeeder extends Seeder
                     'registered_at' => fake()->dateTimeBetween($event->registration_start, 'now')
                 ]);
             }
-        }); */
+        });
     }
 }

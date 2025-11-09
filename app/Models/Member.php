@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\Gender;
+use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Member extends Model
 {
-    /** @use HasFactory<\Database\Factories\MemberFactory> */
+    /** @use HasFactory<MemberFactory> */
     use HasFactory;
 
     /**
@@ -16,12 +18,11 @@ class Member extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'user_id',
         'first_name',
+        'middle_name',
         'last_name',
         'suffix',
         'id_school_number',
-        'email',
         'birth_date',
         'enrollment_date',
         'program',
@@ -32,26 +33,34 @@ class Member extends Model
         'phone',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'birth_date' => 'date',
-            'enrollment_date' => 'date',
+            'is_paid' => 'boolean',
+            'gender' => Gender::class,
+            'birth_date' => 'date:Y-m-d',
+            'enrollment_date' => 'date:Y-m-d',
         ];
     }
 
-    /**
-     * The attributes that are included to model.
-     * @var array
-     */
     protected $with = [
         'program',
     ];
+
+    protected $hidden = [
+        'user_id',
+        'semester_id',
+    ];
+
+    /**
+     * OPTIONAL inverse to User.
+     * Get the user associated to the member.
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, Member>
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Get the program that the member belongs to.
@@ -67,18 +76,16 @@ class Member extends Model
      */
     public function events()
     {
-        return $this->belongsToMany(Events::class, 'event_registrations', 'member_id', 'event_id')
+        return $this->belongsToMany(Event::class, 'event_registrations', 'member_id', 'event_id')
             ->withTimestamps()
             ->withPivot('registered_at');
     }
 
     /**
-     * OPTIONAL inverse to User.
-     * Get the user associated to the member.
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, Member>
+     * Get the semester the member has/is enrolled on.
      */
-    public function user()
+    public function semester()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Semester::class);
     }
 }

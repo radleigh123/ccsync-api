@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\EventsController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MemberController;
 use Illuminate\Http\Request;
@@ -48,23 +48,8 @@ Route::middleware('firebase.auth')->group(function () {
      */
     Route::prefix('users')->group(function () {
         Route::get('/user', [UserController::class, 'getUserById']);
-        // Route::get('/', [UserController::class, 'index']);
-        // Route::get('/{id}', [UserController::class, 'show']);
-        // Route::put('/{id}',  [UserController::class, 'update']);
-        // Route::delete('/{id}',  [UserController::class, 'destroy']);
     });
     Route::apiResource('users', UserController::class);
-
-    /**
-     * Members specific routes
-     */
-    Route::prefix('members')->group(function () {
-        Route::get('/list', [MemberController::class, 'getMembersPagination']);
-        Route::get('/get', [MemberController::class, 'promoteMember']);
-        Route::get('/member', [MemberController::class, 'getMember']);
-        Route::get('/{id}/check', [MemberController::class, 'checkMemberRegistration']);
-    });
-    Route::apiResource('members', MemberController::class);
 
     /**
      * Profile specific routes
@@ -76,14 +61,31 @@ Route::middleware('firebase.auth')->group(function () {
     });
 
     /**
+     * Members specific routes
+     */
+    Route::prefix('members')->group(function () {
+        Route::get('/list', [MemberController::class, 'getMembersPagination']);
+        Route::get('/member', [MemberController::class, 'getMember']);
+        Route::get('/{id}/check', [MemberController::class, 'checkMemberRegistration']);
+    });
+    Route::apiResource('members', MemberController::class);
+
+    Route::middleware(['permission:promote members|promote officers'])->group(function () {
+        Route::prefix('role')->group(function () {
+            Route::post('/{id}/promote', [MemberController::class, 'promoteMember']);
+            Route::post('/{id}/demote', [MemberController::class, 'demoteOfficer']);
+        });
+    });
+
+    /**
      * Events specific routes
      */
     Route::prefix('events')->group(function () {
-        Route::post('/{id}/add', [EventsController::class, 'registerMember']);
-        Route::delete('/{id}/delete/{memberId}', [EventsController::class, 'unregisterMember']);
-        Route::get('/{id}/members', [EventsController::class, 'getEventMembers']);
+        Route::post('/{id}/add', [EventController::class, 'registerMember']);
+        Route::delete('/{id}/delete/{memberId}', [EventController::class, 'unregisterMember']);
+        Route::get('/{id}/members', [EventController::class, 'getEventMembers']);
     });
-    Route::apiResource('events', EventsController::class);
+    Route::apiResource('events', EventController::class);
 });
 
 // Legacy Sanctum route

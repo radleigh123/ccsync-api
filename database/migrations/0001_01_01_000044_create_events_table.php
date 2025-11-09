@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Status;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -23,14 +24,22 @@ return new class extends Migration
             $table->date('registration_start');
             $table->date('registration_end');
             $table->unsignedInteger('max_participants');
-            $table->enum('status', ['open', 'closed', 'cancelled'])->default('open');
+            $table->enum('status', Status::cases())->default(Status::OPEN);
+            $table->foreignId('semester_id')->nullable()
+                ->constrained()
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->timestamps();
         });
 
         Schema::create('event_registrations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
-            $table->foreignId('member_id')->constrained('members')->onDelete('cascade');
+            $table->foreignId('event_id')->constrained()
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+            $table->foreignId('member_id')->constrained()
+                ->cascadeOnUpdate()
+                ->cascadeOnDelete();
             $table->timestamp('registered_at')->useCurrent();
             $table->timestamps();
 

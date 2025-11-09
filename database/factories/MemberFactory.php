@@ -20,13 +20,13 @@ class MemberFactory extends Factory
     {
         return [
             'first_name' => fake()->firstName(),
+            'middle_name' => fake()->lastName(),
             'last_name' => fake()->lastName(),
             'suffix' => fake()->optional(0.2)->randomElement(['Jr.', 'Sr.', 'III', 'IV', 'V']),
             'id_school_number' => $this->generateSchoolNumber(),
-            'email' => fake()->unique()->safeEmail(),
             'birth_date' => fake()->dateTimeBetween('-30 years', '-15 years')->format('Y-m-d'),
             'enrollment_date' => fake()->dateTimeBetween('-4 years', 'now')->format('Y-m-d'),
-            'program' => fake()->randomElement(['BSCS', 'BSIT', 'BSIS', 'BSCE']),
+            'program' => Program::inRandomOrder()->first(),
             'year' => fake()->numberBetween(1, 4),
             'is_paid' => fake()->boolean(70), // 70% chance of being paid
             'gender' => fake()->randomElement(Gender::cases()),

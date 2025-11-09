@@ -14,7 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Register Firebase Auth Middleware
         $middleware->alias([
-            'firebase.auth' => \App\Http\Middleware\FirebaseAuthMiddleware::class,
+        'firebase.auth' => \App\Http\Middleware\FirebaseAuthMiddleware::class,
+        'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
