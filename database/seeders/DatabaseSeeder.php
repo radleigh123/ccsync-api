@@ -11,17 +11,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // PROGRAMS
-        $this->call(ProgramSeeder::class);
+        $this->call([
+            ProgramSeeder::class,
+            SemesterSeeder::class,
+            UserMemberSeeder::class,
+            EventSeeder::class,
+            RequirementSeeder::class,
+            ComplianceSeeder::class,
+        ]);
 
-        // SEMESTERS (starting year 2021)
-        $this->call(SemesterSeeder::class);
-
-        // ROLES, USERS, MEMBERS
-        $this->call(UserMemberSeeder::class);
-
-        // EVENTS
-        $this->call(EventSeeder::class);
         /* $events = [
             [
                 'name' => 'CCS Acquaintance Party',

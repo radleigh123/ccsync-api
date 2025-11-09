@@ -20,28 +20,29 @@ class Semester extends Model
         'status',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'date_start' => 'date',
-            'date_end' => 'date',
-            'status' => Status::class,
-        ];
-    }
+    protected $casts = [
+        'date_start' => 'date',
+        'date_end' => 'date',
+        'status' => Status::class,
+    ];
 
-    public function member(): HasMany
+    public function members(): HasMany
     {
         return $this->hasMany(Member::class);
     }
 
-
-    public function event(): HasMany
+    public function events(): HasMany
     {
         return $this->hasMany(Event::class);
+    }
+
+    public function requirements(): HasMany
+    {
+        return $this->hasMany(Requirement::class);
+    }
+
+    public function offerings(): HasMany
+    {
+        return $this->hasMany(Offering::class);
     }
 }

@@ -3,6 +3,9 @@
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\Requirement\ComplianceController;
+use App\Http\Controllers\Requirement\OfferingController;
+use App\Http\Controllers\Requirement\RequirementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -86,6 +89,24 @@ Route::middleware('firebase.auth')->group(function () {
         Route::get('/{id}/members', [EventController::class, 'getEventMembers']);
     });
     Route::apiResource('events', EventController::class);
+
+    /** 
+     * Requirement specific routes
+     */
+    Route::prefix('requirements')->group(function () {
+        Route::apiResource('offerings', OfferingController::class);
+
+        /* 
+        Route::apiResource('compliances', ComplianceController::class);
+        Route::post('compliances/{id}/submit', [RequirementComplianceController::class, 'submit'])
+            ->middleware('role:student');
+
+        Route::post('compliances/{id}/verify', [RequirementComplianceController::class, 'verify'])
+            ->middleware('permission:verify requirements');
+         */
+    });
+    Route::apiResource('requirements', RequirementController::class);
+    Route::apiResource('compliances', ComplianceController::class);
 });
 
 // Legacy Sanctum route

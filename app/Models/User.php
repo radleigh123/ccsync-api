@@ -33,13 +33,8 @@ class User extends Authenticatable
     // Spatie
     protected $guard_name = 'web';
 
-    /**
-     * The attributes that are added to model.
-     * @var array
-     */
     protected $appends = [
         'role_names',
-        'permission_names',
     ];
 
     /**
@@ -67,17 +62,13 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * The attributes that should be cast.
+     * @var array
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 
     /* protected static function booted()
     {

@@ -133,7 +133,7 @@ class UserMemberSeeder extends Seeder
         ]);
 
         // --- Bulk random students ---
-        User::factory(500)->create()->each(function ($user) use ($studentRole) {
+        User::factory(200)->create()->each(function ($user) use ($studentRole) {
             $user->assignRole($studentRole);
 
             $year = fake()->numberBetween(1, 4);

@@ -45,6 +45,7 @@ class Member extends Model
 
     protected $with = [
         'program',
+        'user:id,email',
     ];
 
     protected $hidden = [
