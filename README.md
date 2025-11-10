@@ -116,4 +116,4 @@ Once your local environment is running, you can explore:
 - `app/Models` -- database schema definitions
 - `database/seeders` -- initial mock data seedings
 
-For more details, refer to the [API Reference](LINK).
+For more details, refer to the [API Reference](https://github.com/radleigh123/ccsync-api/blob/master/docs/API-REFERENCE.md).
