@@ -14,12 +14,15 @@ class Compliance extends Model
         'status',
         'verified_at',
         'verified_by',
+        'attempt',
+        'notes',
     ];
 
     protected $with = [
         'offering:id,active,requirement_id',
         'member:id,last_name,id_school_number,program,year,user_id',
-        'audits',
+        'audits:id,compliance_id,new_status,changed_by',
+        'documents:id,compliance_id,file_name',
     ];
 
     protected $hidden = [];

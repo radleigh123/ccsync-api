@@ -148,6 +148,10 @@ class UserMemberSeeder extends Seeder
             ]);
         });
 
+        /* User::factory()
+            ->count(10)
+            ->insert(); */
+
         // --- Bulk random officers ---
         User::factory(30)->create()->each(function ($user) use ($officerRole) {
             $user->assignRole($officerRole);

@@ -6,6 +6,7 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\Requirement\ComplianceController;
 use App\Http\Controllers\Requirement\OfferingController;
 use App\Http\Controllers\Requirement\RequirementController;
+use App\Models\Compliance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -54,6 +55,10 @@ Route::middleware('firebase.auth')->group(function () {
     });
     Route::apiResource('users', UserController::class);
 
+    // Custom error role message
+    Route::get('/userz', [UserController::class, 'index'])
+        ->middleware('role:admin');
+
     /**
      * Profile specific routes
      */
@@ -93,20 +98,16 @@ Route::middleware('firebase.auth')->group(function () {
     /** 
      * Requirement specific routes
      */
-    Route::prefix('requirements')->group(function () {
-        Route::apiResource('offerings', OfferingController::class);
-
-        /* 
-        Route::apiResource('compliances', ComplianceController::class);
-        Route::post('compliances/{id}/submit', [RequirementComplianceController::class, 'submit'])
+    Route::prefix('compliances')->group(function () {
+        Route::post('/{id}/submit', [Compliance::class, 'store'])
             ->middleware('role:student');
 
-        Route::post('compliances/{id}/verify', [RequirementComplianceController::class, 'verify'])
-            ->middleware('permission:verify requirements');
-         */
+        Route::post('/{id}/verify', [Compliance::class, 'update'])
+            ->middleware('role:officer');
     });
-    Route::apiResource('requirements', RequirementController::class);
     Route::apiResource('compliances', ComplianceController::class);
+    Route::apiResource('requirements', RequirementController::class);
+    Route::apiResource('offerings', OfferingController::class);
 });
 
 // Legacy Sanctum route
