@@ -45,6 +45,11 @@ FIREBASE_CREDENTIALS="path/to/firebase-service-account.json"
 
 > 📒 **Note**: Ensure your Firebase credentials file exists and the path is correct relative to your project directory.
 
+Then run this Artisan command to generate the application key:
+```bash
+php artisan key:generate
+```
+
 #### 2) Firebase Setup
 The CCSync API integrates with **Firebase Authentication** to manage user accounts and secure API access.
 You’ll need a Firebase project with a generated **Service Account Key (JSON)**.
