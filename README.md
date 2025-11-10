@@ -1,61 +1,119 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# CCSync API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Introduction
 
-## About Laravel
+The **CCSync API** is organized around [REST](https://en.wikipedia.org/wiki/REST). The API has predictable resource-oriented URLs, accepts form-encoded request bodies, returns JSON-encoded responses, and uses standard HTTP response codes and authentication. Authentication and authorization are handled securely through **Firebase**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This API powers the backend of the CCSync's system, supporting functionalities such as user management, events, member tracking, and requirement submissions.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Getting Started
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+(If you’re reading this, you’re likely setting up the project for local development.)
+This section guides you through installing dependencies, configuring your environment, and running the project locally
 
-## Learning Laravel
+**Prerequisites**:
+- [Git](https://git-scm.com/install/window)
+- PHP 8.4.14+
+- Composer 2.8.12+
+- [XAMPP](https://www.apachefriends.org/index.htm) (For *MySQL*)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+**Optional**:
+- API Testing Tools: [Postman](https://www.postman.com/) | [Insomnia](https://insomnia.rest/)
+- DB Clients: [DataGrip](https://www.jetbrains.com/datagrip/) | [DBeaver](https://dbeaver.io/) | XAMPP's built-in phpMyAdmin
+- Git Clients: [Github Desktop](https://github.com/apps/desktop) | [GitKraken](https://www.gitkraken.com/) | [Fork](https://git-fork.com/)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+#### 1) Set up the project
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Clone and Install**
+Clone the repository and install the required dependencies
+```bash
+git clone https://github.com/radleigh123/ccsync-api.git
+cd ccsync-api
+composer install
+```
 
-## Laravel Sponsors
+After installation, create your environment configuration file:
+```bash
+cp .env.example .env
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Then open `.env` and configure the following key values:
+```
+APP_URL=http://localhost:8000
+FIREBASE_CREDENTIALS="path/to/firebase-service-account.json"
+```
 
-### Premium Partners
+> 📒 **Note**: Ensure your Firebase credentials file exists and the path is correct relative to your project directory.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+#### 2) Firebase Setup
+The CCSync API integrates with **Firebase Authentication** to manage user accounts and secure API access.
+You’ll need a Firebase project with a generated **Service Account Key (JSON)**.
+Steps:
+1. - Go to [Firebase Console](https://console.firebase.google.com/).
+2. Select CCSync project.
+3. Navigate to **Project Settings → Service Accounts**.
+4. Click **Generate New Private Key** and download the JSON file.
+5. Place the file in a safe location inside your project (e.g., `/config/firebase/credentials.json`).
+6. Update your `.env`:
+   ```
+   FIREBASE_CREDENTIALS="path/to/firebase-service-account.json"
+   ```
 
-## Contributing
+> ❗ **IMPORTANT:** Make sure port `8000` is not already in use. If it is, you can specify another port when running the server (e.g., `php artisan serve --port=8080`).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### 3) Project Migrations
 
-## Code of Conduct
+Set up your MySQL database and run the following Laravel commands. Run these Laravel setup commands:
+```bash
+php artisan migrate:fresh --seed  # Create database schema with sample data
+php artisan storage:link          # Link public storage for file access
+php artisan config:cache          # Cache configuration for performance
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+#### 4) Running the Server
 
-## Security Vulnerabilities
+Start the laravel development server:
+```bash
+php artisan serve
+```
+The API should now be accessible at:
+```
+http://localhost:8000/api
+```
+You can test it via CLI / Postman / Insomnia:
+**CLI**
+```bash
+curl -X GET http://localhost:8000/api
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+curl -X GET http://localhost:8000/api/ping
+```
 
-## License
+## Troubleshooting
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**Composer Issues**
+If you encounter dependency or configuration errors, run:
+```bash
+composer diagnose
+php -v
+```
+This will help verify your PHP version and identify potential environment issues.
+
+**Common Issues**
+
+| Problem                         | Possible Cause                     | Solution                                      |
+| ------------------------------- | ---------------------------------- | --------------------------------------------- |
+| `Could not find driver`         | MySQL extension not enabled        | Enable `extension=mysqli` in `php.ini`        |
+| `Firebase user creation failed` | Invalid credentials path           | Double-check `FIREBASE_CREDENTIALS` in `.env` |
+| 404 routes                      | Incorrect route registration order | Recheck api routes using `php artisan r:l`    | 
+
+## Next Steps
+
+Once your local environment is running, you can explore:
+- `routes/api.php` -- all configured API endpoints
+- `app/Http/Controllers` -- logic for each resource (JSON resources IN PROGRESS)
+- `app/Models` -- database schema definitions
+- `database/seeders` -- initial mock data seedings
+
+For more details, refer to the [API Reference](LINK).
