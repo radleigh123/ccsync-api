@@ -45,7 +45,6 @@ class UserController extends Controller
             'display_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|min:6|confirmed',
-            'id_school_number' => 'required|string|max:10|unique:users,id_school_number',
         ]);
 
         if ($validator->fails()) {
@@ -82,15 +81,12 @@ class UserController extends Controller
             DB::commit();
 
             return response()->json([
-                'success' => true,
-                'message' => 'User registered successfully',
                 'user' => [
                     'id' => $user->id,
                     'display_name' => $user->display_name,
                     'email' => $user->email,
                     'firebase_uid' => $firebaseUser->uid,
                     'email_verified' => false,
-                    'id_school_number' => $user->id_school_number,
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -107,7 +103,6 @@ class UserController extends Controller
             }
 
             return response()->json([
-                'success' => false,
                 'message' => 'Registration failed',
                 'error' => $e->getMessage()
             ], 500);
@@ -129,7 +124,6 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'display_name' => 'required|string|max:255',
-            'id_school_number' => 'required|integer|unique:members,id_school_number',
         ]);
 
         if ($validator->fails()) {
