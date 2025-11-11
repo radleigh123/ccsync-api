@@ -13,8 +13,8 @@ This section guides you through installing dependencies, configuring your enviro
 
 **Prerequisites**:
 - [Git](https://git-scm.com/install/window)
-- PHP 8.4.14+
-- Composer 2.8.12+
+- PHP 8.4.14+ (Haven't installed PHP? [Click here!](https://github.com/radleigh123/ccsync-api/blob/master/docs/setup/PHP.md))
+- Composer 2.8.12+ (Haven't installed Composer? [Click here!]())
 - [XAMPP](https://www.apachefriends.org/index.htm) (For *MySQL*)
 
 **Optional**:
@@ -104,6 +104,14 @@ composer diagnose
 php -v
 ```
 This will help verify your PHP version and identify potential environment issues.
+
+**PHP Issues**
+Ensure required PHP extensions are enabled in your `php.ini`:
+- `extension=mysqli`
+- `extension=openssl`
+- `extension=curl`
+- `extension=mbstring`
+- `extension=json`
 
 **Common Issues**
 
