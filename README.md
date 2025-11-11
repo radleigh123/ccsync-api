@@ -22,6 +22,12 @@ This section guides you through installing dependencies, configuring your enviro
 - DB Clients: [DataGrip](https://www.jetbrains.com/datagrip/) | [DBeaver](https://dbeaver.io/) | XAMPP's built-in phpMyAdmin
 - Git Clients: [Github Desktop](https://github.com/apps/desktop) | [GitKraken](https://www.gitkraken.com/) | [Fork](https://git-fork.com/)
 
+---
+
+⚠ RECOMMENDED: Before setting up, read this [PHP configuration guide](https://github.com/radleigh123/ccsync-api/blob/master/docs/setup/PHP.md#php-configurations-phpini).
+
+---
+
 #### 1) Set up the project
 
 **Clone and Install**
@@ -54,7 +60,7 @@ php artisan key:generate
 The CCSync API integrates with **Firebase Authentication** to manage user accounts and secure API access.
 You’ll need a Firebase project with a generated **Service Account Key (JSON)**.
 Steps:
-1. - Go to [Firebase Console](https://console.firebase.google.com/).
+1. Go to [Firebase Console](https://console.firebase.google.com/).
 2. Select CCSync project.
 3. Navigate to **Project Settings → Service Accounts**.
 4. Click **Generate New Private Key** and download the JSON file.
@@ -63,8 +69,6 @@ Steps:
    ```
    FIREBASE_CREDENTIALS="path/to/firebase-service-account.json"
    ```
-
-> ❗ **IMPORTANT:** Make sure port `8000` is not already in use. If it is, you can specify another port when running the server (e.g., `php artisan serve --port=8080`).
 
 #### 3) Project Migrations
 
@@ -81,6 +85,8 @@ Start the laravel development server:
 ```bash
 php artisan serve
 ```
+> ❗ **IMPORTANT:** Make sure port `8000` is not already in use. If it is, you can specify another port when running the server (e.g., `php artisan serve --port=8080`).
+
 The API should now be accessible at:
 ```
 http://localhost:8000/api
@@ -104,14 +110,6 @@ composer diagnose
 php -v
 ```
 This will help verify your PHP version and identify potential environment issues.
-
-**PHP Issues**
-Ensure required PHP extensions are enabled in your `php.ini`:
-- `extension=mysqli`
-- `extension=openssl`
-- `extension=curl`
-- `extension=mbstring`
-- `extension=json`
 
 **Common Issues**
 
