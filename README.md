@@ -14,7 +14,7 @@ This section guides you through installing dependencies, configuring your enviro
 **Prerequisites**:
 - [Git](https://git-scm.com/install/window)
 - PHP 8.4.14+ (Haven't installed PHP? [Click here!](https://github.com/radleigh123/ccsync-api/blob/master/docs/setup/PHP.md))
-- Composer 2.8.12+ (Haven't installed Composer? [Click here!]())
+- Composer 2.8.12+ (Haven't installed Composer? [Click here!](https://github.com/radleigh123/ccsync-api/blob/master/docs/setup/Composer.md))
 - [XAMPP](https://www.apachefriends.org/index.htm) (For *MySQL*)
 
 **Optional**:
