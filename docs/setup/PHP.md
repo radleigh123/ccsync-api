@@ -36,7 +36,7 @@ C:\path\to\php.exe
 #### OPTION A: Manual Installation
 1. Go to the official [PHP downloads page](https://www.php.net/downloads).
 2. Select the latest Windows binaries. Same as the image below:
-   ![[CCSYNC-API-DOC-INSTALL-PHP-1.png]]
+   ![Screenshot of PHP download Windows example](https://github.com/radleigh123/ccsync-api/blob/master/docs/setup/CCSYNC-API-DOC-INSTALL-PHP-1.png)
 3. Download the **ZIP file** (choose **VS17 x64 Thread Safe** or **VS17 x86 Thread Safe** for 32-bit system).
 4. Extract the ZIP to a directory, e.g., `C:\php-8.4.14`.
 5. Add the PHP folder to your system variables PATH:
