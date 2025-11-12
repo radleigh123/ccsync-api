@@ -38,6 +38,45 @@ Member endpoints and payloads. Model fields (members table):
 | POST | /role/{id}/promote | role (body) | Promote a member (requires roles/permissions) |
 | POST | /role/{id}/demote | role (body) | Demote an officer (requires admin) |
 
+### GET /members
+
+Response (200):
+
+```json
+{
+  members: [
+    {
+      "id": 1,
+      "first_name": "Student Student",
+      "middle_name": "Metz",
+      "last_name": "Member",
+      "suffix": null,
+      "id_school_number": 20599993,
+      "birth_date": "2006-03-28",
+      "enrollment_date": "2025-08-16",
+      "program": {
+        "code": "BSIT",
+        "name": "Bachelor of Science in Information Technology"
+      },
+      "year": 1,
+      "is_paid": true,
+      "gender": "other",
+      "biography": "Reprehenderit minima iusto accusantium sit nulla natus.",
+      "phone": "+1 (206) 915-9086",
+      "created_at": "2025-11-09T15:43:25.000000Z",
+      "updated_at": "2025-11-09T15:43:25.000000Z",
+      "user": {
+        "id": 1,
+        "email": "localstudent@student.com",
+        "role_names": [
+          "student"
+        ]
+      }
+    },
+    ...
+  ]
+}
+```
  
 ### POST /members
 Create a member. The endpoint expects minimal required fields and will link to an existing user via `user_id` if provided.
@@ -46,14 +85,15 @@ Request (example):
 
 ```json
 {
-  "user_id": 12,             // optional: link an existing user
+  "user_id": 12,             // an existing user
   "first_name": "John",
   "middle_name": "A.",
   "last_name": "Doe",
+  "suffix": "Dr.",
   "id_school_number": 10001,
   "birth_date": "2004-01-01",
   "enrollment_date": "2022-08-01",
-  "program": "CS",
+  "program": "BSIT",
   "year": 2,
   "is_paid": true
 }
@@ -64,12 +104,7 @@ Response (201):
 ```json
 {
   "message": "Member created successfully",
-  "member": {
-    "id": 45,
-    "first_name": "John",
-    "last_name": "Doe",
-    "program": { "code": "CS", "name": "Computer Science" }
-  }
+  "member": { /* local member */ },
 }
 ```
 
@@ -80,7 +115,39 @@ Response (200):
 ```json
 {
   "message": "Members retrieved successfully",
-  "members": [ /* paginated items with member + user relation */ ]
+  "members": {
+    "current_page": 1,
+    "data": [
+      { /* local member1 */ },
+      { /* local member2 */ },
+      ...
+    ],
+    "first_page_url": "http://localhost:8000/api/members/list?page=1",
+    "from": 1,
+    "last_page": 12,
+    "last_page_url": "http://localhost:8000/api/members/list?page=12",
+    "links": [
+      {
+          "url": null,
+          "label": "&laquo; Previous",
+          "page": null,
+          "active": false
+      },
+      {
+          "url": "http://localhost:8000/api/members/list?page=1",
+          "label": "1",
+          "page": 1,
+          "active": true
+      },
+      ...
+    ],
+    "next_page_url": "http://localhost:8000/api/members/list?page=2",
+    "path": "http://localhost:8000/api/members/list",
+    "per_page": 20,
+    "prev_page_url": null,
+    "to": 20,
+    "total": 234
+  }
 }
 ```
 

@@ -31,11 +31,12 @@ class MemberController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer',
             'first_name' => 'required|string|max:255',
+            'middle_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'suffix' => 'nullable|string|max:50',
             'id_school_number' => 'required|integer|unique:members,id_school_number',
-            'email' => 'nullable|email|unique:members,email',
             'birth_date' => 'required|date',
             'enrollment_date' => 'required|date',
             'program' => 'required|string|exists:programs,code',

@@ -51,12 +51,25 @@ Response (200):
   "events": [
     {
       "id": 1,
-      "name": "Orientation",
-      "event_date": "2025-10-01",
+      "name": "CCS Acquaintance Party",
+      "description": "A casual gathering to get to know each other.",
+      "venue": "Room 219",
+      "event_date": "2024-07-01",
+      "time_from": "10:00:00",
+      "time_to": "15:00:00",
+      "registration_start": "2024-06-01",
+      "registration_end": "2024-06-30",
       "status": "open",
-      "attendees": 50,
-      "available_slots": 25
-    }
+      "is_full": false,
+      "is_registration_open": false,
+      "due_days": -1,
+      "max_participants": 150,
+      "attendees": 51,
+      "available_slots": 99,
+      "created_at": "2025-11-09T15:43:30.000000Z",
+      "updated_at": "2025-11-09T15:43:30.000000Z"
+    },
+    ...
   ]
 }
 ```
