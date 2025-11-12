@@ -15,9 +15,7 @@ Refer to the controller-level API docs for detailed request/response examples an
 - [User](controllers/UserController.md)
 - [Member](controllers/MemberController.md)
 - [Event](controllers/EventController.md)
-- [Requirement](controllers/Requirement-RequirementController.md)
-- [Offering](controllers/Requirement-OfferingController.md)
-- [Compliance](controllers/Requirement-ComplianceController.md)
+- [Requirement](controllers/requirement)
 
 For example:
 ```http
