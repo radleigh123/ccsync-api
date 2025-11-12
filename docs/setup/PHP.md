@@ -104,6 +104,7 @@ extension=pdo_mysql
 extension=fileinfo
 extension=gd
 extension=sodium
+extension=zip
 ```
 
 #### Verify extensions are loaded:
