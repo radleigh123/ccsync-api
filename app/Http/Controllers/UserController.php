@@ -71,7 +71,6 @@ class UserController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'firebase_uid' => $firebaseUser->uid,
-                'id_school_number' => $request->id_school_number,
                 'email_verified_at' => null,
             ]);
 
@@ -275,6 +274,7 @@ class UserController extends Controller
 
     /**
      * Get user profile by ID School Number or Firebase UID
+     * OBSOLETE
      */
     public function getUserById(Request $request)
     {

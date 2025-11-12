@@ -52,7 +52,6 @@ Route::middleware('firebase.auth')->group(function () {
      */
     Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index']);
-        Route::get('/user', [UserController::class, 'getUserById']);
         Route::get('/{id}', [UserController::class, 'show']);
         Route::put('/{id}', [UserController::class, 'update']);
         Route::delete('/{id}', [UserController::class, 'destroy']);
