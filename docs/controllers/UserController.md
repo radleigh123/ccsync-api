@@ -23,8 +23,6 @@ Model fields (users table):
 | POST | /auth/register | display_name (required), email (required), password (required), password_confirmation (required), id_school_number (optional) | Create Firebase user + local user |
 | POST | /auth/send-password-reset | email (body, required) | Send password reset link via Firebase |
 | POST | /auth/send-email-verification | id_token (body, required) | Send email verification link (protected) |
-| POST | /test/login | email (body), password (body) | TEST: Sign-in |
-| GET | /user-sanctum | — | TEST: Return current authenticated Laravel user (protected)
 | GET | /users | — | List all users (protected)
 | GET | /users/{id} | id (path, required) | Get user by id (protected)
 | PUT | /users/{id} | email (optional), display_name (optional) | Update user (protected)
@@ -107,29 +105,6 @@ Validation error example (422):
 }
 ```
 
-### POST /test/login
-
-Legacy/test login using email/password via Firebase. Useful for local testing.
-
-Request body:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-Response (200):
-
-```json
-{
-  "message": "Login successful",
-  "user": { /* local user */ },
-  "firebase_user": { /* firebase SDK response including idToken, refreshToken */ }
-}
-```
-
 ### GET /users
 
 List all users (protected). Response contains minimal user fields by default.
@@ -162,9 +137,68 @@ Response (200):
 
 ## Profile
 
+### PUT /profile/{id}/editProfileInfo
+
+Change display name and biography.
+
+Request body:
+
+```json
+{
+  "display_name": "DISPLAY.NAME",
+  "biography": "biography paragraph",
+}
+```
+
+Response (200):
+
+```json
+{
+  "success": true,
+  "message": "User & Member updated successfully",
+  "user": { /* updated user */ },
+  "member": { /* updated member */ }
+}
+```
+
+### PUT /profile/{id}/editPersonal
+
+Change email, phone, and gender.
+
+Request body:
+
+```json
+{
+  "email": "email@example.com",
+  "phone": "+631234567890",
+  "gender": "other"
+}
+```
+
+Response (200):
+
+```json
+{
+  "success": true,
+  "message": "User & Member updated successfully",
+  "user": { /* updated user */ },
+  "member": { /* updated member */ }
+}
+```
+
+Conflict Error (409):
+
+```json
+{
+  "success": false,
+  "message": "Failed to update Firebase user",
+  "error": "The email address is already in use by another account."
+}
+```
+
 ### PUT /profile/{id}/editPassword
 
-Change password (requires `current_password`).
+Change local password and on Firebase.
 
 Request body:
 
@@ -183,5 +217,14 @@ Response (200):
   "success": true,
   "message": "Password updated successfully",
   "user": { /* updated user */ }
+}
+```
+
+Unauthorized Error (401):
+
+```json
+{
+  "success": false,
+  "message": "Current password is not correct"
 }
 ```

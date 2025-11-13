@@ -125,6 +125,7 @@ class MemberController extends Controller
         try {
             // TODO: limit columns
             $query = Member::with('program')->with('user')->get();
+            // $query = Member::with('user')->where('role=officer');
 
             if ($request->has('page') && $request->has('per_page')) {
                 $perPage = $request->input('per_page', 10);

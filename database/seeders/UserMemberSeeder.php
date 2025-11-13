@@ -57,6 +57,8 @@ class UserMemberSeeder extends Seeder
         // update cache to know about the newly created permissions (required if using WithoutModelEvents in seeders)
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
+        $semester = Semester::orderByDesc('id')->first();
+
         // Create roles and assign created permissions
 
         // STUDENTS
@@ -66,29 +68,6 @@ class UserMemberSeeder extends Seeder
             'view events',
             'view requirements',
         ]);
-
-        // chaining
-
-        $officerRole = Role::firstOrCreate(['name' => 'officer'])
-            ->syncPermissions([
-                'view members',
-                'add members',
-                'edit members',
-                'delete members',
-                'view events',
-                'add events',
-                'edit events',
-                'delete events',
-                'view requirements',
-                'add requirements',
-                'edit requirements',
-                'delete requirements',
-            ]);
-
-        $semester = Semester::orderByDesc('id')->first();
-
-        $adminRole = Role::firstOrCreate(['name' => 'admin'])
-            ->syncPermissions(Permission::all());
 
         $student = User::factory()->create([
             'display_name' => 'Student Student',
@@ -102,25 +81,48 @@ class UserMemberSeeder extends Seeder
             'semester_id' => $semester,
         ]);
 
-        $officer = User::factory()->create([
-            'display_name' => 'Officer Officer',
-            'email' => 'localofficer@officer.com',
-        ]);
-        $officer->assignRole($officerRole);
-        Member::factory()->create([
-            'user_id' => $officer,
-            'first_name' => $officer->display_name,
-            'last_name' => 'Member',
-            'semester_id' => $semester,
-        ]);
+        $roles = array('officer', 'secretary', 'treasurer', 'auditor', 'representative');
+        for ($i = 0; $i < count($roles); $i++) {
+            $role = $roles[$i];
+            $officerRole = Role::firstOrCreate(['name' => $role])
+                ->syncPermissions([
+                    'view members',
+                    'add members',
+                    'edit members',
+                    'delete members',
+                    'view events',
+                    'add events',
+                    'edit events',
+                    'delete events',
+                    'view requirements',
+                    'add requirements',
+                    'edit requirements',
+                    'delete requirements',
+                ]);
+
+            $officer = User::factory()->create([
+                'display_name' => "$role.member",
+                'email' => "local$role@officer.com",
+            ]);
+            $officer->assignRole($officerRole);
+            Member::factory()->create([
+                'user_id' => $officer,
+                'first_name' => $officer->display_name,
+                'last_name' => 'Member',
+                'semester_id' => $semester,
+            ]);
+        }
+
+        $presidentRole = Role::firstOrCreate(['name' => 'president'])
+            ->syncPermissions(Permission::all());
 
         $admin = User::factory()->create([
-            'display_name' => 'Administrator',
+            'display_name' => 'President',
             'email' => 'keaneradleigh@gmail.com',
             'password' => '123456',
             'firebase_uid' => 'bT1oLwJqcZbR9uMbTjvMRA8EHcv2',
         ]);
-        $admin->assignRole($adminRole);
+        $admin->assignRole($presidentRole);
         Member::factory()->create([
             'user_id' => $admin,
             'first_name' => $admin->display_name,
@@ -132,8 +134,23 @@ class UserMemberSeeder extends Seeder
             'semester_id' => $semester,
         ]);
 
+        $vicePresidentRole = Role::firstOrCreate(['name' => 'vice-president'])
+            ->syncPermissions(Permission::all());
+
+        $admin2 = User::factory()->create([
+            'display_name' => 'Vice-President',
+            'email' => 'vice-president@gmail.com',
+        ]);
+        $admin2->assignRole($vicePresidentRole);
+        Member::factory()->create([
+            'user_id' => $admin2,
+            'first_name' => $admin2->display_name,
+            'last_name' => 'Member',
+            'semester_id' => $semester,
+        ]);
+
         // --- Bulk random students ---
-        User::factory(200)->create()->each(function ($user) use ($studentRole) {
+        User::factory(100)->create()->each(function ($user) use ($studentRole) {
             $user->assignRole($studentRole);
 
             $year = fake()->numberBetween(1, 4);
@@ -153,7 +170,7 @@ class UserMemberSeeder extends Seeder
             ->insert(); */
 
         // --- Bulk random officers ---
-        User::factory(30)->create()->each(function ($user) use ($officerRole) {
+        User::factory(20)->create()->each(function ($user) use ($officerRole) {
             $user->assignRole($officerRole);
 
             $year = fake()->numberBetween(1, 4);

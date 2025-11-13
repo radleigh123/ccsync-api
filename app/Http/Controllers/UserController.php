@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Gender;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Enum;
+use Kreait\Firebase\Auth\SignIn\FailedToSignIn;
 use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
 use Kreait\Firebase\Exception\AuthException;
 use Kreait\Laravel\Firebase\Facades\Firebase;
@@ -247,20 +249,13 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Token verified successfully',
-                'user' => [
-                    'id' => $user->id,
-                    'display_name' => $user->display_name,
-                    'email' => $user->email,
-                    'firebase_uid' => $firebaseUid,
-                    'email_verified' => $firebaseUser->emailVerified,
-                    'id_school_number' => $user->id_school_number,
-                ],
+                'user' => $user,
                 'firebase_claims' => $verifiedIdToken->claims()->all(),
             ]);
         } catch (FailedToVerifyToken $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid ID token',
+                'message' => 'Firebase: Invalid ID token',
                 'error' => $e->getMessage()
             ], Response::HTTP_UNAUTHORIZED);
         } catch (\Exception $e) {
@@ -412,10 +407,11 @@ class UserController extends Controller
             ], 422);
         }
 
-        try {
-            $signInResult = $this->firebaseAuth->signInWithEmailAndPassword($request->email, $request->password);
-            $firebaseUser = $signInResult->data();
+        $validated = $validator->validated();
 
+        try {
+            $signInResult = $this->firebaseAuth->signInWithEmailAndPassword($validated['email'], $validated['password']);
+            $firebaseUser = $signInResult->data();
             $firebaseUid = $firebaseUser['localId'] ?? null;
 
             if (!$firebaseUid) {
@@ -428,24 +424,18 @@ class UserController extends Controller
 
             if (!$user) {
                 return response()->json([
-                    'message' => 'User not found in local database'
+                    'message' => 'User does not exist'
                 ], 404);
             }
 
             return response()->json([
                 'message' => 'Login successful',
-                'user' => [
-                    'id' => $user->id,
-                    'display_name' => $user->display_name,
-                    'email' => $user->email,
-                    'firebase_uid' => $user->firebase_uid,
-                    'email_verified' => !is_null($user->email_verified_at),
-                ],
+                'user' => $user,
                 'firebase_user' => $firebaseUser,
             ]);
         } catch (AuthException $e) {
             return response()->json([
-                'message' => 'Firebase authentication failed',
+                'message' => 'Firebase: Invalid email or password',
                 'error' => $e->getMessage()
             ], 401);
         } catch (\Exception $e) {
@@ -473,9 +463,6 @@ class UserController extends Controller
     {
         $user = User::with('member')->findOrFail($id);
 
-        $firebaseUid = $user->firebase_uid;
-        $origDisplayName = $user->display_name;
-
         $validator = Validator::make($request->all(), [
             'display_name' => 'max:255|string',
             'biography' => 'max:255|string',
@@ -492,45 +479,41 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
-            try {
-                // Update user database
-                $user->update(['display_name' => $request->display_name]);
-                $user->member->update(['biography' => $request->biography]);
+            // Update user database
+            $user->update(['display_name' => $request->display_name]);
+            $user->member->update(['biography' => $request->biography]);
 
-                // Update user Firebase
-                $this->firebaseAuth->updateUser($firebaseUid, [
-                    'displayName' => $request->display_name,
-                ]);
+            DB::commit();
 
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'User & Member updated successfully',
-                    'user' => $user->getChanges(),
-                    'member' => $user->member->getChanges()
-                ]);
-            } catch (\Exception $dbException) {
-                DB::rollBack();
-
-                try {
-                    $this->firebaseAuth->updateUser($firebaseUid, [
-                        'displayName' => $origDisplayName,
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Failed to update Firebase user', [
-                        'success' => false,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-
-                throw $dbException;
-            }
-        } catch (\Exception $e) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User & Member updated successfully',
+                'user' => $user->getChanges(),
+                'member' => $user->member->getChanges()
+            ]);
+        } catch (QueryException $dbException) {
             DB::rollBack();
+
+            // Check for duplicate entry
+            if ($dbException->getCode() == 23000 && str_contains($dbException->getMessage(), 'Duplicate entry')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email already exists',
+                    'error' => $dbException->getMessage(),
+                ], 409);
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update user',
+                'message' => 'QUERY ERROR: Failed to updated local user',
+                'error' => $dbException->getMessage(),
+            ], 409);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update local user',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -558,53 +541,71 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
-            try {
-                $validatedData = $validator->validated();
+            $validatedData = $validator->validated();
 
-                // Update user database
-                $user->update(['email' => $validatedData['email']]);
-                $user->member->update($validatedData);
+            // Update user database
+            $user->update(['email' => $validatedData['email']]);
+            $user->member->update($validatedData);
 
-                // Update user Firebase
-                $this->firebaseAuth->updateUser($firebaseUid, [
-                    'email' => $validatedData['email'],
-                ]);
+            // Update user Firebase
+            $this->firebaseAuth->updateUser($firebaseUid, [
+                'email' => $validatedData['email'],
+            ]);
 
-                DB::commit();
+            DB::commit();
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'User & Member updated successfully',
-                    'user' => [
-                        $user->getPrevious(),
-                        $user->getChanges()
-                    ],
-                    'member' => [
-                        $user->member->getPrevious(),
-                        $user->member->getChanges(),
-                    ],
-                ]);
-            } catch (\Exception $dbException) {
-                DB::rollBack();
-
-                try {
-                    $this->firebaseAuth->updateUser($firebaseUid, [
-                        'email' => $user->getOriginal('email'),
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Failed to update Firebase user', [
-                        'success' => false,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-
-                throw $dbException;
-            }
-        } catch (\Exception $e) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User & Member updated successfully',
+                'user' => [
+                    $user->getPrevious(),
+                    $user->getChanges()
+                ],
+                'member' => [
+                    $user->member->getPrevious(),
+                    $user->member->getChanges(),
+                ],
+            ]);
+        } catch (QueryException $dbException) {
             DB::rollBack();
+
+            // Check for duplicate entry
+            if ($dbException->getCode() == 23000 && str_contains($dbException->getMessage(), 'Duplicate entry')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email already exists',
+                    'error' => $dbException->getMessage(),
+                ], 409);
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update user',
+                'message' => 'QUERY ERROR: Failed to updated local user',
+                'error' => $dbException->getMessage(),
+            ], 409);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Revert Firebase email
+            try {
+                $this->firebaseAuth->updateUser($firebaseUid, [
+                    'email' => $user->getOriginal('email'),
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to update Firebase user', [
+                    'success' => false,
+                    'error' => $e->getMessage()
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update Firebase user',
+                    'error' => $e->getMessage()
+                ], 409);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update local user',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -638,49 +639,49 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
-            try {
-                $validatedData = $validator->validated();
+            $validatedData = $validator->validated();
 
-                // Update user database
-                $user->update(['password' => Hash::make($validatedData['password'])]);
+            // Update user database
+            $user->update(['password' => Hash::make($validatedData['password'])]);
 
-                // Update user password Firebase
-                /* $this->firebaseAuth->updateUser($firebaseUid, [
+            // Update user password Firebase
+            /* $this->firebaseAuth->updateUser($firebaseUid, [
                     'password' => $validatedData['password'],
                 ]); */
-                $this->firebaseAuth->changeUserPassword($firebaseUid, $validatedData['password']);
+            $this->firebaseAuth->changeUserPassword($firebaseUid, $validatedData['password']);
 
-                DB::commit();
+            DB::commit();
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Password updated successfully',
-                    'user' => [
-                        $user->getPrevious(),
-                        $user->getChanges()
-                    ],
-                ]);
-            } catch (\Exception $dbException) {
-                DB::rollBack();
-
-                try {
-                    $this->firebaseAuth->updateUser($firebaseUid, [
-                        'password' => $request->current_password,
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Failed to update Firebase user', [
-                        'success' => false,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-
-                throw $dbException;
-            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Password updated successfully',
+                'user' => [
+                    $user->getPrevious(),
+                    $user->getChanges()
+                ],
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
+            try {
+                $this->firebaseAuth->updateUser($firebaseUid, [
+                    'password' => $request->current_password,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to update Firebase user', [
+                    'success' => false,
+                    'error' => $e->getMessage()
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update Firebase user',
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update user',
+                'message' => 'Failed to update local user',
                 'error' => $e->getMessage()
             ], 500);
         }
