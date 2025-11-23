@@ -28,21 +28,11 @@ class UserFactory extends Factory
         return [
             'display_name' => $userName,
             'email' => $this->generateEmail($userName),
-            'email_verified_at' => now(),
+            'email_verified' => fake()->boolean(70),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'firebase_uid' => 'firebase_' . Str::random(10),
         ];
-    }
-
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
     }
 
     /**

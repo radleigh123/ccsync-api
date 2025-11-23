@@ -20,8 +20,6 @@ class EventController extends Controller
         try {
             $query = Event::query();
 
-            // TODO: finalize ERD
-            // TODO: coordinate with DB for updated status
             // Filter by status
             if ($request->has('status')) {
                 $query->where('status', $request->status);

@@ -2,68 +2,46 @@
 
 namespace App\Http\Controllers;
 
+use App\Helper\ApiResponse;
+use App\Http\Requests\Member\StoreMemberRequest;
+use App\Http\Requests\Member\UpdateMemberRequest;
+use App\Http\Resources\Member\MemberCollection;
+use App\Http\Resources\Member\MemberResource;
+use App\Http\Services\MemberService;
 use App\Models\Member;
 use App\Models\Program;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class MemberController extends Controller
 {
+    use ApiResponse;
+
+    protected MemberService $service;
+
+    public function __construct(MemberService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
      * Get all members with their programs
      */
     public function index()
     {
-        try {
-            return response()->json(['members' => Member::all()]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error retrieving members',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $members = $this->service->getAll();
+        return new MemberCollection($members);
     }
 
     /**
      * Store a new member
      */
-    public function store(Request $request)
+    public function store(StoreMemberRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'required|integer',
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'suffix' => 'nullable|string|max:50',
-            'id_school_number' => 'required|integer|unique:members,id_school_number',
-            'birth_date' => 'required|date',
-            'enrollment_date' => 'required|date',
-            'program' => 'required|string|exists:programs,code',
-            'year' => 'required|integer|between:1,4',
-            'is_paid' => 'required|boolean'
-        ]);
+        $validated = $request->validated();
 
-        // TODO: Improve later validation error handling ☠
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors()
-            ], 422);
-        }
+        $member = $this->service->create($validated);
 
-        // load user_id and semester_id (localStorage) from request
-        $user = User::findOrFail($request->user_id);
-
-        $member = Member::create([
-            ...$request->all(),
-            'user_id' => $user->id,
-        ]);
-        $member->load('program');
-
-        return response()->json([
-            'message' => 'Member created successfully',
-            'member' => $member
-        ], 201);
+        return new MemberResource($member);
     }
 
     /**
@@ -71,42 +49,22 @@ class MemberController extends Controller
      */
     public function show(string $id)
     {
-        return response()->json(['member' => Member::findOrFail($id)]);
+        return new MemberResource($this->service->find($id));
     }
 
     /**
      * Update the specified member
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateMemberRequest $request, string $id)
     {
-        $member = Member::findOrFail($id);
+        $validated = $request->validated();
 
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'sometimes|required|string|max:255',
-            'last_name' => 'sometimes|required|string|max:255',
-            'suffix' => 'nullable|string|max:50',
-            'id_school_number' => 'sometimes|required|integer|unique:members,id_school_number,' . $member->id,
-            'email' => 'nullable|email|unique:members,email,' . $member->id,
-            'birth_date' => 'sometimes|required|date',
-            'enrollment_date' => 'sometimes|required|date',
-            'program' => 'sometimes|required|string|exists:programs,code',
-            'year' => 'sometimes|required|integer|between:1,4',
-            'is_paid' => 'sometimes|required|boolean'
-        ]);
+        // Retrieve the validated the input data...
+        // $validated = $request->safe()->only(['first_name', 'last_name']);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        $member = $this->service->update($id, $validated);
 
-        $member->update($request->all());
-        $member->load('program');
-
-        return response()->json([
-            'message' => 'Member updated successfully',
-            'member' => $member
-        ]);
+        return new MemberResource($member);
     }
 
     /**
@@ -114,10 +72,12 @@ class MemberController extends Controller
      */
     public function destroy(string $id)
     {
-        $member = Member::findOrFail($id);
-        $member->delete();
-
-        return response()->json(['message' => 'Member deleted successfully']);
+        try {
+            $this->service->delete($id);
+            $this->success(message: 'Succesfully deleted member', code: 204);
+        } catch (\Exception $e) {
+            $this->error(message: $e->getMessage());
+        }
     }
 
     public function getMembersPagination(Request $request)

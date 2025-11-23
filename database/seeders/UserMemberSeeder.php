@@ -120,7 +120,7 @@ class UserMemberSeeder extends Seeder
             'display_name' => 'President',
             'email' => 'keaneradleigh@gmail.com',
             'password' => '123456',
-            'firebase_uid' => 'bT1oLwJqcZbR9uMbTjvMRA8EHcv2',
+            'firebase_uid' => 'NwVUqIRDldM0qa8mO6npUN1dy7r2',
         ]);
         $admin->assignRole($presidentRole);
         Member::factory()->create([

@@ -9,7 +9,7 @@ Model fields (users table):
 | id | integer | Primary key |
 | display_name | string | required |
 | email | string | unique, required |
-| email_verified_at | timestamp|null | nullable |
+| email_verified | boolean | nullable |
 | firebase_uid | string|null | nullable, unique — maps Firebase user |
 | password | string | hashed password |
 | remember_token | string|null | nullable |
