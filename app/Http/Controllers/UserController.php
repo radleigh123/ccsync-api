@@ -109,13 +109,16 @@ class UserController extends Controller
         }
     }
 
+    // BUG: REFACTOR: REDIRECT TO FRONT INSTEAD OF ENDPOINT, AND THEN FROM THERE SEND WITH TOKEN
     public function verifyEmail(Request $request)
     {
-        $userId = $request->user()->id;
+        $validated = $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ]);
 
         try {
-            $user = $this->service->updateEmailVerification($userId);
-            return new UserResource($user);
+            $user = $this->service->updateEmailVerification($request->email);
+            return $this->success(message: 'Successfully verified email.', code: 204);
         } catch (\Exception $e) {
             return $this->error(message: $e->getMessage());
         }

@@ -32,8 +32,7 @@ Route::prefix('auth')->group(function () {
 
     Route::post('/send-password-reset', [UserController::class, 'sendPasswordResetEmail']);
     Route::post('/send-email-verification', [UserController::class, 'sendEmailVerification']); // FIXME: NEED UI
-    Route::get('/verify-email', [UserController::class, 'verifyEmail'])
-        ->middleware('firebase.auth');
+    Route::get('/verify-email', [UserController::class, 'verifyEmail']);
 });
 
 // Protected routes (require Firebase authentication)

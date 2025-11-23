@@ -236,9 +236,9 @@ class UserService
         }
     }
 
-    public function updateEmailVerification(string $id)
+    public function updateEmailVerification(string $email)
     {
-        $user = User::findOrFail($id);
+        $user = User::where('email', $email)->firstOrFail();
         $user->email_verified = true;
         $user->save();
         return $user;
