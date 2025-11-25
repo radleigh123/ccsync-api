@@ -8,10 +8,8 @@ use App\Http\Requests\User\RegisterRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\User\UserCollection;
 use App\Http\Resources\User\UserResource;
-use App\Http\Services\UserService;
+use App\Services\UserService;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Kreait\Firebase\Exception\AuthException;
 
 class UserController extends Controller
 {

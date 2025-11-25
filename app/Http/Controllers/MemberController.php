@@ -8,7 +8,8 @@ use App\Http\Requests\Member\StoreMemberRequest;
 use App\Http\Requests\Member\UpdateMemberRequest;
 use App\Http\Resources\Member\MemberCollection;
 use App\Http\Resources\Member\MemberResource;
-use App\Http\Services\MemberService;
+use App\Services\MemberService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class MemberController extends Controller
@@ -27,11 +28,7 @@ class MemberController extends Controller
      */
     public function index()
     {
-        return $this->success(
-            new MemberCollection($this->service->getAll()),
-            200,
-            "Successfully retrieved members"
-        );
+        return $this->success($this->service->getAll()->toResourceCollection());
     }
 
     /**
@@ -39,14 +36,8 @@ class MemberController extends Controller
      */
     public function store(StoreMemberRequest $request)
     {
-        $validated = $request->validated();
-        $member = $this->service->create($validated);
-
-        return $this->success(
-            new MemberResource($member),
-            201,
-            "Successfully stored member"
-        );
+        $member = $this->service->create($request->validated());
+        return $this->success($member->toResource(), 201);
     }
 
     /**
@@ -54,11 +45,20 @@ class MemberController extends Controller
      */
     public function show(string $id)
     {
-        return $this->success(
-            new MemberResource($this->service->find($id)),
-            200,
-            "Successfully retrieved member"
-        );
+        try {
+            return $this->success(
+                new MemberResource($this->service->find($id)),
+                200,
+                "Successfully retrieved member"
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->error(message: "Member has not been registered");
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500
+            );
+        }
     }
 
     /**

@@ -36,7 +36,6 @@ class MemberResource extends JsonResource
             'phone' => $this->phone,
 
             'user' => new UserResource($this->whenLoaded('user')),
-
             'semester' => new SemesterResource($this->whenLoaded('semester')),
 
             'created_at' => $this->created_at->toDateString(),

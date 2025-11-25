@@ -3,13 +3,19 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Http\Resources\Event\EventCollection;
+use App\Http\Resources\Event\EventResource;
+use App\Http\Resources\User\UserCollection;
 use Carbon\Carbon;
 use Database\Factories\EventFactory;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+#[UseResource(EventResource::class)]
+#[UserCollection(EventCollection::class)]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -53,6 +59,11 @@ class Event extends Model
         return $this->belongsTo(Semester::class);
     }
 
+    public function getAttendeesAttribute(): int
+    {
+        return $this->members()->count();
+    }
+
     /**
      * Get available slots for the event
      */
@@ -88,6 +99,15 @@ class Event extends Model
         $daysRemaining = $now->diffInDays($registrationEnd);
         if ($daysRemaining < 0) return -1;
         return $daysRemaining;
+    }
+
+    public function scopeFilter($query, array $filters)
+    {
+        return $query
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when(($filters['upcoming'] ?? null) === 'true', fn($q) => $q->upcoming())
+            ->when(($filters['current'] ?? null) === 'true', fn($q) => $q->thisMonth())
+            ->when(($filters['open'] ?? null) === 'true', fn($q) => $q->open());
     }
 
     /**

@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use App\Helper\ApiResponse;
 use App\Http\Requests\Member\UpdateProfileRequest;
 use App\Http\Requests\User\ChangePasswordRequest;
-use App\Http\Services\MemberService;
-use App\Http\Services\UserService;
-use Illuminate\Http\Request;
+use App\Services\MemberService;
+use App\Services\UserService;
 
 class ProfileController extends Controller
 {
