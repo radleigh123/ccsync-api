@@ -77,15 +77,15 @@ Route::middleware('firebase.auth')->group(function () {
         Route::get('/list', [MemberController::class, 'getMembersPagination']);
         Route::get('/member', [MemberController::class, 'getMember']);
         Route::get('/{memberId}/check', [MemberController::class, 'checkMemberRegistration']);
-        Route::get('/members/search', [MemberController::class, 'searchMembers']);
+        Route::get('/search', [MemberController::class, 'searchMembers']);
 
     });
     Route::apiResource('members', MemberController::class);
 
     Route::middleware(['permission:promote members|promote officers'])->group(function () {
         Route::prefix('role')->group(function () {
-            Route::post('/{memberid}/promote', [MemberController::class, 'promoteMember']);
-            Route::post('/{memberid}/demote', [MemberController::class, 'demoteOfficer']);
+            Route::post('/{memberId}/promote', [MemberController::class, 'promoteMember']);
+            Route::post('/{memberId}/demote', [MemberController::class, 'demoteOfficer']);
         });
     });
 
@@ -117,8 +117,8 @@ Route::middleware('firebase.auth')->group(function () {
      * Officer
      */
     Route::prefix('officers')->group(function () {
-    Route::get('/', [MemberController::class, 'getOfficersInOrder']);
-});
+        Route::get('/', [MemberController::class, 'getOfficersInOrder']);
+    });
 });
 
 // Legacy Sanctum route
