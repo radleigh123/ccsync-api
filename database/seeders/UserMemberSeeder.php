@@ -75,13 +75,17 @@ class UserMemberSeeder extends Seeder
         ]);
         $student->assignRole($studentRole);
         Member::factory()->create([
-            'user_id' => $student,
-            'first_name' => $student->display_name,
-            'last_name' => 'Member',
-            'semester_id' => $semester,
+            'user_id'           => $student,
+            'first_name'        => $student->display_name,
+            'last_name'         => 'Member',
+            'semester_id'       => $semester,
+            'id_school_number'  => $student->id_school_number,
         ]);
 
-        $roles = array('officer', 'secretary', 'treasurer', 'auditor', 'representative');
+        $genOfficerRole = Role::firstOrCreate(['name' => 'officer']);
+
+        $roles = array('secretary', 'treasurer', 'auditor', 'representative');
+
         for ($i = 0; $i < count($roles); $i++) {
             $role = $roles[$i];
             $officerRole = Role::firstOrCreate(['name' => $role])
@@ -104,12 +108,13 @@ class UserMemberSeeder extends Seeder
                 'display_name' => "$role.member",
                 'email' => "local$role@officer.com",
             ]);
-            $officer->assignRole($officerRole);
+            $officer->assignRole([$studentRole, $genOfficerRole, $officerRole]);
             Member::factory()->create([
-                'user_id' => $officer,
-                'first_name' => $officer->display_name,
-                'last_name' => 'Member',
-                'semester_id' => $semester,
+                'user_id'           => $officer,
+                'first_name'        => $officer->display_name,
+                'last_name'         => 'Member',
+                'semester_id'       => $semester,
+                'id_school_number'  => $officer->id_school_number,
             ]);
         }
 
@@ -122,16 +127,17 @@ class UserMemberSeeder extends Seeder
             'password' => '123456',
             'firebase_uid' => 'NwVUqIRDldM0qa8mO6npUN1dy7r2',
         ]);
-        $admin->assignRole($presidentRole);
+        $admin->assignRole([$studentRole, $genOfficerRole, $presidentRole]);
         Member::factory()->create([
-            'user_id' => $admin,
-            'first_name' => $admin->display_name,
-            'middle_name' => 'Konnichiwa',
-            'last_name' => 'President',
-            'enrollment_date' => date('2021-09-06'),
-            'year' => 4,
-            'is_paid' => true,
-            'semester_id' => $semester,
+            'user_id'           => $admin,
+            'first_name'        => $admin->display_name,
+            'middle_name'       => 'Konnichiwa',
+            'last_name'         => 'President',
+            'enrollment_date'   => date('2021-09-06'),
+            'year'              => 4,
+            'is_paid'           => true,
+            'semester_id'       => $semester,
+            'id_school_number'  => $admin->id_school_number,
         ]);
 
         $vicePresidentRole = Role::firstOrCreate(['name' => 'vice-president'])
@@ -141,13 +147,17 @@ class UserMemberSeeder extends Seeder
             'display_name' => 'Vice-President',
             'email' => 'vice-president@gmail.com',
         ]);
-        $admin2->assignRole($vicePresidentRole);
+        $admin2->assignRole([$studentRole, $genOfficerRole, $vicePresidentRole]);
         Member::factory()->create([
-            'user_id' => $admin2,
-            'first_name' => $admin2->display_name,
-            'last_name' => 'Member',
-            'semester_id' => $semester,
+            'user_id'           => $admin2,
+            'first_name'        => $admin2->display_name,
+            'last_name'         => 'Member',
+            'semester_id'       => $semester,
+            'id_school_number'  => $admin2->id_school_number,
         ]);
+
+        // --- Bulk unregistered members ---
+        User::factory(50)->create();
 
         // --- Bulk random students ---
         User::factory(100)->create()->each(function ($user) use ($studentRole) {
@@ -156,12 +166,17 @@ class UserMemberSeeder extends Seeder
             $year = fake()->numberBetween(1, 4);
             $enrollmentDate = date("Y-m-d", strtotime("- {$year} years", strtotime("06 September")));
 
+            $firstName = explode(".", $user->display_name)[0];
+            $lastName = explode(".", $user->display_name)[1];
+
             Member::factory()->create([
-                'user_id' => $user,
-                'first_name' => $user->display_name,
-                'enrollment_date' => $enrollmentDate,
-                'year' => $year,
-                'semester_id' => Semester::orderByDesc('id')->first(),
+                'user_id'           => $user,
+                'first_name'        => $firstName,
+                'last_name'         => $lastName,
+                'enrollment_date'   => $enrollmentDate,
+                'year'              => $year,
+                'semester_id'       => Semester::orderByDesc('id')->first(),
+                'id_school_number'  => $user->id_school_number,
             ]);
         });
 
@@ -170,18 +185,23 @@ class UserMemberSeeder extends Seeder
             ->insert(); */
 
         // --- Bulk random officers ---
-        User::factory(20)->create()->each(function ($user) use ($officerRole) {
-            $user->assignRole($officerRole);
+        User::factory(20)->create()->each(function ($user) use ($genOfficerRole, $officerRole) {
+            $user->assignRole([$genOfficerRole, $officerRole]);
 
             $year = fake()->numberBetween(1, 4);
             $enrollmentDate = date("Y-m-d", strtotime("- {$year} years", strtotime("06 September")));
 
+            $firstName = explode(".", $user->display_name)[0];
+            $lastName = explode(".", $user->display_name)[1];
+
             Member::factory()->create([
-                'user_id' => $user,
-                'first_name' => $user->display_name,
-                'enrollment_date' => $enrollmentDate,
-                'year' => $year,
-                'semester_id' => Semester::orderByDesc('id')->first(),
+                'user_id'           => $user,
+                'first_name'        => $firstName,
+                'last_name'         => $lastName,
+                'enrollment_date'   => $enrollmentDate,
+                'year'              => $year,
+                'semester_id'       => Semester::orderByDesc('id')->first(),
+                'id_school_number'  => $user->id_school_number,
             ]);
         });
 

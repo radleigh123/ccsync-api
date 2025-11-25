@@ -38,11 +38,10 @@ class StoreMemberRequest extends FormRequest
             'gender'            => [Rule::enum(Gender::class)],
             'biography'         => 'sometimes|string',
             'phone'             => 'sometimes|string',
-            'semester_id'       => 'required|integer|exists:semesters,id',
+            'semester_id'       => 'sometimes|integer|exists:semesters,id',
         ];
     }
 
-    // NOTE: CONTINUE HERE, CREATE USER:service, resource, collection first
     public function messages(): array
     {
         return [
@@ -50,7 +49,7 @@ class StoreMemberRequest extends FormRequest
             'id_school_number.unique'   => 'This member\'s ID school number is already a member.',
             'program.exists'            => 'The selected program is invalid/unknown.',
             'gender.enum'               => 'The only valid genders are [MALE, FEMALE, OTHER].',
-            'semester_id.required'      => 'Please specify a semester in which member is enrolled.',
+            // 'semester_id.required'      => 'Please specify a semester in which member is enrolled.',
             'semester_id.exists'        => 'The selected semester is invalid/unknown.',
         ];
     }

@@ -32,6 +32,7 @@ class User extends Authenticatable
         'display_name',
         'email',
         'email_verified',
+        'id_school_number',
         'password',
         'firebase_uid',
     ];
@@ -71,7 +72,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $casts = [
-        'password' => 'hashed',
+        'password'          => 'hashed',
+        'email_verified'    => 'boolean',
     ];
 
     /* protected static function booted()

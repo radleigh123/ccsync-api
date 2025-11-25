@@ -29,18 +29,21 @@ class UserService
         DB::beginTransaction();
         $firebaseUser = null;
 
+        $displayName = $data['first_name'] . "." . $data['last_name'];
+
         try {
             // --- FIREBASE CREATE ---
             $firebaseUser = $this->auth->createUser([
-                'displayName'   => $data['display_name'],
+                'displayName'   => $displayName,
                 'email'         => $data['email'],
                 'password'      => $data['password'],
             ]);
 
             // --- DATABASE CREATE ---
             $user = User::create([
-                'display_name'      => $data['display_name'],
+                'display_name'      => $displayName,
                 'email'             => $data['email'],
+                'id_school_number'  => $data['id_school_number'],
                 'password'          => Hash::make($data['password']),
                 'firebase_uid'      => $firebaseUser->uid,
             ]);
@@ -218,6 +221,15 @@ class UserService
         }
     }
 
+    public function findSchoolId(string $schoolIdNumber)
+    {
+        try {
+            return User::where('id_school_number', $schoolIdNumber)->firstOrFail();
+        } catch (\Exception $e) {
+            throw new \Exception("Failed to find user school ID: " . $e->getMessage(), 500);
+        }
+    }
+
     public function resetPasswordLink(array $data)
     {
         try {
@@ -236,9 +248,9 @@ class UserService
         }
     }
 
-    public function updateEmailVerification(string $email)
+    public function updateEmailVerification(array $data)
     {
-        $user = User::where('email', $email)->firstOrFail();
+        $user = User::where('email', $data['email'])->firstOrFail();
         $user->email_verified = true;
         $user->save();
         return $user;

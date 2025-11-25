@@ -29,7 +29,6 @@ class UserController extends Controller
      */
     public function index()
     {
-        // return response()->json(['users' => User::all()]);
         $users = $this->service->getAll();
         return new UserCollection($users);
     }
@@ -62,9 +61,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Delete user from Firebase and local database
-     */
     public function destroy(string $id)
     {
         try {
@@ -76,7 +72,7 @@ class UserController extends Controller
     }
 
     /**
-     * Send password reset email
+     * Send password reset email link to user's email
      */
     public function sendPasswordResetEmail(Request $request)
     {
@@ -93,7 +89,7 @@ class UserController extends Controller
     }
 
     /**
-     * Send email verification
+     * Send email verification link to user's email
      */
     public function sendEmailVerification(Request $request)
     {
@@ -109,7 +105,7 @@ class UserController extends Controller
         }
     }
 
-    // BUG: REFACTOR: REDIRECT TO FRONT INSTEAD OF ENDPOINT, AND THEN FROM THERE SEND WITH TOKEN
+    // BUG: REFACTOR: REDIRECT TO FRONT INSTEAD DIRECTLY. FROM THERE ADD BUTTON ("Click to verify email")
     public function verifyEmail(Request $request)
     {
         $validated = $request->validate([
@@ -117,7 +113,7 @@ class UserController extends Controller
         ]);
 
         try {
-            $user = $this->service->updateEmailVerification($request->email);
+            $user = $this->service->updateEmailVerification($validated);
             return $this->success(message: 'Successfully verified email.', code: 204);
         } catch (\Exception $e) {
             return $this->error(message: $e->getMessage());
@@ -136,6 +132,12 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return $this->error(message: $e->getMessage(), code: $e->getCode());
         }
+    }
+
+    public function findUserSchoolId(Request $request)
+    {
+        $user = $this->service->findSchoolId($request->id_school_number);
+        return new UserResource($user);
     }
 
     /* public function adminDashboard(Request $request)

@@ -39,7 +39,8 @@ Route::prefix('auth')->group(function () {
 Route::middleware('firebase.auth')->group(function () {
     Route::get('/user-sanctum', function (Request $request) {
         return response()->json([
-            'user' => $request->user(),
+            'user'              => $request->user(),
+            'hasStudentRole'    => $request->user()->hasRole('student'),
         ]);
     });
 
@@ -54,6 +55,7 @@ Route::middleware('firebase.auth')->group(function () {
         Route::put('/{id}', [UserController::class, 'update']);
         Route::delete('/{id}', [UserController::class, 'destroy']);
     });
+    Route::get('/user', [UserController::class, 'findUserSchoolId']);
 
     // TODO: Custom error role message
     Route::middleware(['role:admin'])->group(function () {
@@ -74,14 +76,14 @@ Route::middleware('firebase.auth')->group(function () {
     Route::prefix('members')->group(function () {
         Route::get('/list', [MemberController::class, 'getMembersPagination']);
         Route::get('/member', [MemberController::class, 'getMember']);
-        Route::get('/{id}/check', [MemberController::class, 'checkMemberRegistration']);
+        Route::get('/{memberId}/check', [MemberController::class, 'checkMemberRegistration']);
     });
     Route::apiResource('members', MemberController::class);
 
     Route::middleware(['permission:promote members|promote officers'])->group(function () {
         Route::prefix('role')->group(function () {
-            Route::post('/{id}/promote', [MemberController::class, 'promoteMember']);
-            Route::post('/{id}/demote', [MemberController::class, 'demoteOfficer']);
+            Route::post('/{memberid}/promote', [MemberController::class, 'promoteMember']);
+            Route::post('/{memberid}/demote', [MemberController::class, 'demoteOfficer']);
         });
     });
 
