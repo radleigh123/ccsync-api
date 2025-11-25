@@ -47,7 +47,6 @@ class FirebaseAuthMiddleware
                     'email' => $firebaseUser->email,
                     'password' => Hash::make(uniqid()),
                     'firebase_uid' => $firebaseUid,
-                    'email_verified_at' => $firebaseUser->emailVerified ? now() : null,
                 ]);
             }
 

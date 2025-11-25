@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use App\Http\Resources\User\UserCollection;
+use App\Http\Resources\User\UserResource;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
+#[UseResource(UserResource::class)]
+#[UserCollection(UserCollection::class)]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -26,6 +31,8 @@ class User extends Authenticatable
     protected $fillable = [
         'display_name',
         'email',
+        'email_verified',
+        'id_school_number',
         'password',
         'firebase_uid',
     ];
@@ -43,7 +50,6 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'email_verified_at',
         'password',
         'firebase_uid',
         'remember_token',
@@ -66,8 +72,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'password'          => 'hashed',
+        'email_verified'    => 'boolean',
     ];
 
     /* protected static function booted()

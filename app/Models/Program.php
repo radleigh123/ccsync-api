@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Http\Resources\Member\ProgramResource;
 use Database\Factories\ProgramFactory;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[UseResource(ProgramResource::class)]
 class Program extends Model
 {
     /** @use HasFactory<ProgramFactory> */

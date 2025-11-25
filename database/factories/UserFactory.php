@@ -23,26 +23,30 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        $userName = fake()->unique()->userName();
+        $fName = fake()->unique()->firstName();
+        $lName = fake()->unique()->lastName();
+        $userName = "$fName.$lName";
 
         return [
-            'display_name' => $userName,
-            'email' => $this->generateEmail($userName),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
-            'firebase_uid' => 'firebase_' . Str::random(10),
+            'display_name'      => $userName,
+            'email'             => $this->generateEmail($userName),
+            'email_verified'    => fake()->boolean(70),
+            'password'          => static::$password ??= Hash::make('password'),
+            'remember_token'    => Str::random(10),
+            'firebase_uid'      => 'firebase_' . Str::random(10),
+            'id_school_number'  => $this->generateSchoolNumber(),
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Generate a random 8-digit school number that starts with 19, 20, or 21.
+     * @return string
      */
-    public function unverified(): static
+    private function generateSchoolNumber(): string
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        $prefix = fake()->randomElement(['17', '18', '19', '20', '21']);
+        $suffix = fake()->numerify('######'); // 6 random digits
+        return "{$prefix}{$suffix}";
     }
 
     /**

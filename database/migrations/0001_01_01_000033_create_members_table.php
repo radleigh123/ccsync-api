@@ -19,7 +19,7 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->string('first_name');
-            $table->string('middle_name');
+            $table->string('middle_name')->nullable();
             $table->string('last_name')->nullable();
             $table->string('suffix', 50)->nullable();
             $table->unsignedInteger('id_school_number')->unique();

@@ -2,68 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Member;
-use App\Models\Program;
-use App\Models\User;
+use App\Helper\ApiResponse;
+use App\Http\Requests\Member\PromoteRequest;
+use App\Http\Requests\Member\StoreMemberRequest;
+use App\Http\Requests\Member\UpdateMemberRequest;
+use App\Http\Resources\Member\MemberCollection;
+use App\Http\Resources\Member\MemberResource;
+use App\Services\MemberService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class MemberController extends Controller
 {
+    use ApiResponse;
+
+    protected MemberService $service;
+
+    public function __construct(MemberService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
      * Get all members with their programs
      */
     public function index()
     {
-        try {
-            return response()->json(['members' => Member::all()]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error retrieving members',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return $this->success($this->service->getAll()->toResourceCollection());
     }
 
     /**
      * Store a new member
      */
-    public function store(Request $request)
+    public function store(StoreMemberRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'required|integer',
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'suffix' => 'nullable|string|max:50',
-            'id_school_number' => 'required|integer|unique:members,id_school_number',
-            'birth_date' => 'required|date',
-            'enrollment_date' => 'required|date',
-            'program' => 'required|string|exists:programs,code',
-            'year' => 'required|integer|between:1,4',
-            'is_paid' => 'required|boolean'
-        ]);
-
-        // TODO: Improve later validation error handling ☠
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors()
-            ], 422);
-        }
-
-        // load user_id and semester_id (localStorage) from request
-        $user = User::findOrFail($request->user_id);
-
-        $member = Member::create([
-            ...$request->all(),
-            'user_id' => $user->id,
-        ]);
-        $member->load('program');
-
-        return response()->json([
-            'message' => 'Member created successfully',
-            'member' => $member
-        ], 201);
+        $member = $this->service->create($request->validated());
+        return $this->success($member->toResource(), 201);
     }
 
     /**
@@ -71,42 +45,39 @@ class MemberController extends Controller
      */
     public function show(string $id)
     {
-        return response()->json(['member' => Member::findOrFail($id)]);
+        try {
+            return $this->success(
+                new MemberResource($this->service->find($id)),
+                200,
+                "Successfully retrieved member"
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->error(message: "Member has not been registered");
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500
+            );
+        }
     }
 
     /**
      * Update the specified member
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateMemberRequest $request, string $id)
     {
-        $member = Member::findOrFail($id);
+        $validated = $request->validated();
 
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'sometimes|required|string|max:255',
-            'last_name' => 'sometimes|required|string|max:255',
-            'suffix' => 'nullable|string|max:50',
-            'id_school_number' => 'sometimes|required|integer|unique:members,id_school_number,' . $member->id,
-            'email' => 'nullable|email|unique:members,email,' . $member->id,
-            'birth_date' => 'sometimes|required|date',
-            'enrollment_date' => 'sometimes|required|date',
-            'program' => 'sometimes|required|string|exists:programs,code',
-            'year' => 'sometimes|required|integer|between:1,4',
-            'is_paid' => 'sometimes|required|boolean'
-        ]);
+        // Retrieve the validated the input data...
+        // $validated = $request->safe()->only(['first_name', 'last_name']);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        $member = $this->service->update($id, $validated);
 
-        $member->update($request->all());
-        $member->load('program');
-
-        return response()->json([
-            'message' => 'Member updated successfully',
-            'member' => $member
-        ]);
+        return $this->success(
+            new MemberResource($member),
+            200,
+            "Successfully updated member {$member->first_name}"
+        );
     }
 
     /**
@@ -114,37 +85,32 @@ class MemberController extends Controller
      */
     public function destroy(string $id)
     {
-        $member = Member::findOrFail($id);
-        $member->delete();
-
-        return response()->json(['message' => 'Member deleted successfully']);
+        try {
+            $this->service->delete($id);
+            return $this->success(
+                message: 'Succesfully deleted member',
+                code: 204, // Change to 200, if want result message
+            );
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500,
+            );
+        }
     }
 
     public function getMembersPagination(Request $request)
     {
+        // TODO: limit columns
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 20);
         try {
-            // TODO: limit columns
-            $query = Member::with('program')->with('user')->get();
-            // $query = Member::with('user')->where('role=officer');
-
-            if ($request->has('page') && $request->has('per_page')) {
-                $perPage = $request->input('per_page', 10);
-                $query = Member::with('program')->paginate($perPage);
-            }
-
-            if ($request->has('id_school_number') && $request->id_school_number > 0) {
-                $query = Member::with('program')->where('id_school_number', $request->id_school_number)->get();
-            }
-
-            return response()->json([
-                'message' => 'Members retrieved successfully',
-                'members' => $query
-            ]);
+            return $this->service->paginate($page, $perPage);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error retrieving members',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500,
+            );
         }
     }
 
@@ -154,109 +120,83 @@ class MemberController extends Controller
     public function getMember(Request $request)
     {
         try {
-            if ($request->has('id_school_number') && $request->id_school_number > 0) {
-                // return response()->json(Member::with(['user'])->where('id_school_number', $request->id_school_number)->get());
-                return response()->json([
-                    'member' => Member::where('id_school_number', $request->id_school_number)->get()
-                ]);
+            $idSchoolNumber = $request->input('id_school_number', 1);
+            if ($idSchoolNumber == 1) {
+                throw new \Exception("ID School Number not inputted", 422);
             }
-            throw new \Exception('Something went wrong with ID school number');
+            $member = $this->service->findBySchoolNumber($idSchoolNumber);
+            return $this->success(
+                new MemberResource($member),
+                200,
+                "Successfully retrieved {$member->first_name} by School ID"
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => "Failed to retrieve member through id school number",
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500,
+            );
         }
     }
 
     /**
      * Examine if member is registered to event
      */
-    public function checkMemberRegistration(Request $request, string $id)
+    public function checkMemberRegistration(Request $request, string $memberId)
     {
-        $query = Member::with('events')->findOrFail($id);
         $eventId = $request->input('event_id');
+        $event = $this->service->checkEventRegistration($memberId, $eventId);
+        $msgResult = is_null($event) ?
+            "Member is not registered to this event."
+            :
+            "Member is registered to this event.";
 
-        $matchedEvent = $query->events->firstWhere('id', $eventId);
-
-        return response()->json([
-            'registered' => !is_null($matchedEvent),
-            'event' => $matchedEvent
-        ]);
+        return $this->success(
+            message: $msgResult,
+            code: 200,
+        );
     }
-
-    /**
-     * Get programs for dropdown
-     */
-    public function getPrograms()
-    {
-        return response()->json(['programs' => Program::all()]);
-    }
-
-    // --- Promotion logic ---
 
     /**
      * Assign a new role to a member (student)
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function promoteMember(Request $request, string $id)
+    public function promoteMember(PromoteRequest $request, string $memberId)
     {
-        $user = $request->user();
-        $memberId = $id;
-        $newRole = $request->input('role');
+        $validated = $request->validated();
 
-        // i think it the role will change the admin as president or vice president
-        if (! $user->hasAnyRole(['officer', 'admin'])) {
-            return response()->json([
-                'message' => 'Unauthorized: Only officers or admins can promote members.'
-            ], 403);
+        $newRole = $validated['role'];
+        $user = $request->user(); // Get current user
+
+        try {
+            return $this->success(
+                $this->service->promoteMemberToOfficer($user, $memberId, $newRole),
+                200,
+                "Successfully promoted member to {$newRole}."
+            );
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+            );
         }
-
-        $member = Member::with('user')->findOrFail($memberId);
-        $student = $member->user;   
-
-        if ($user->hasRole('officer') && $newRole === 'admin') {
-            return response()->json([
-                'message' => 'Officers cannot promote members to admin.'
-            ], 403);
-        }
-
-        $student->syncRoles([$newRole]); // remove previous, assign new
-
-        return response()->json([
-            'message' => "Member promoted to {$newRole} successfully.",
-            'member' => $member->load('user')
-        ]);
     }
 
-    public function demoteOfficer(Request $request, string $id)
+    public function demoteOfficer(PromoteRequest $request, string $memberId)
     {
-        $user = $request->user();
-        $memberId = $id;
-        $newRole = $request->input('role');
+        $validated = $request->validated();
 
-        if (! $user->hasRole('admin')) {
-            return response()->json([
-                'message' => 'Unauthorized: Only admins can demote officer.'
-            ], 403);
+        $newRole = $validated['role'];
+        $user = $request->user(); // Get current user
+
+        try {
+            return $this->success(
+                $this->service->demoteOfficerToRole($user, $memberId, $newRole),
+                200,
+                "Successfully demoted officer to {$newRole}."
+            );
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+            );
         }
-
-        $member = Member::with('user')->findOrFail($memberId);
-        $officer = $member->user;
-
-        if ($newRole === 'admin') {
-            return response()->json([
-                'message' => 'Cannot demote to admin.'
-            ], 403);
-        }
-
-        $officer->syncRoles([$newRole]); // remove previous, assign new
-
-        return response()->json([
-            'message' => "Officer demoted to {$newRole} successfully.",
-            'member' => $member->load('user')
-        ]);
     }
 
     //to get officers in order

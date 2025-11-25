@@ -3,6 +3,7 @@
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Requirement\ComplianceController;
 use App\Http\Controllers\Requirement\OfferingController;
 use App\Http\Controllers\Requirement\RequirementController;
@@ -23,25 +24,23 @@ Route::get('/register', function () {
     return response()->json(['message' => 'Register endpoint']);
 })->name('test');
 
-Route::post('/test/login', [UserController::class, 'login']);
-
 // Firebase Authentication routes
 Route::prefix('auth')->group(function () {
     // Public auth routes
-    Route::post('/login', [UserController::class, 'verifyToken']);
+    Route::post('/login', [UserController::class, 'login']);
     Route::post('/register', [UserController::class, 'store']);
-    Route::post('/send-password-reset', [UserController::class, 'sendPasswordResetEmail']);
 
-    Route::post('/send-email-verification', [UserController::class, 'sendEmailVerification'])
-        ->middleware('firebase.auth'); // FIXME: NEED UI
+    Route::post('/send-password-reset', [UserController::class, 'sendPasswordResetEmail']);
+    Route::post('/send-email-verification', [UserController::class, 'sendEmailVerification']); // FIXME: NEED UI
+    Route::get('/verify-email', [UserController::class, 'verifyEmail']);
 });
 
 // Protected routes (require Firebase authentication)
 Route::middleware('firebase.auth')->group(function () {
     Route::get('/user-sanctum', function (Request $request) {
         return response()->json([
-            'user' => $request->user(),
-            'firebase_uid' => $request->firebase_uid
+            'user'              => $request->user(),
+            'hasStudentRole'    => $request->user()->hasRole('student'),
         ]);
     });
 
@@ -56,18 +55,19 @@ Route::middleware('firebase.auth')->group(function () {
         Route::put('/{id}', [UserController::class, 'update']);
         Route::delete('/{id}', [UserController::class, 'destroy']);
     });
+    Route::get('/user', [UserController::class, 'findUserSchoolId']);
 
-    // Custom error role message
-    Route::get('/userz', [UserController::class, 'index'])
-        ->middleware('role:admin');
+    // TODO: Custom error role message
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/userz', [UserController::class, 'index']);
+    });
 
     /**
      * Profile specific routes
      */
     Route::prefix('profile')->group(function () {
-        Route::put('/{id}/editProfileInfo', [UserController::class, 'updateProfileInformation']);
-        Route::put('/{id}/editPersonal', [UserController::class, 'updatePersonal']);
-        Route::put('/{id}/editPassword', [UserController::class, 'updatePassword']);
+        Route::put('/{memberId}/edit', [ProfileController::class, 'update']);
+        Route::put('/{memberId}/editPassword', [ProfileController::class, 'updatePassword']);
     });
 
     /**
@@ -84,8 +84,8 @@ Route::middleware('firebase.auth')->group(function () {
 
     Route::middleware(['permission:promote members|promote officers'])->group(function () {
         Route::prefix('role')->group(function () {
-            Route::post('/{id}/promote', [MemberController::class, 'promoteMember']);
-            Route::post('/{id}/demote', [MemberController::class, 'demoteOfficer']);
+            Route::post('/{memberid}/promote', [MemberController::class, 'promoteMember']);
+            Route::post('/{memberid}/demote', [MemberController::class, 'demoteOfficer']);
         });
     });
 
@@ -93,9 +93,9 @@ Route::middleware('firebase.auth')->group(function () {
      * Events specific routes
      */
     Route::prefix('events')->group(function () {
-        Route::post('/{id}/add', [EventController::class, 'registerMember']);
-        Route::delete('/{id}/delete/{memberId}', [EventController::class, 'unregisterMember']);
-        Route::get('/{id}/members', [EventController::class, 'getEventMembers']);
+        Route::post('/{eventId}/add', [EventController::class, 'registerMember']);
+        Route::delete('/{eventId}/delete', [EventController::class, 'unregisterMember']);
+        Route::get('/{eventId}/members', [EventController::class, 'getEventMembers']);
     });
     Route::apiResource('events', EventController::class);
 

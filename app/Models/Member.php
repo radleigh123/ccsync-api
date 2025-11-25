@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use App\Enums\Gender;
+use App\Http\Resources\Member\MemberCollection;
+use App\Http\Resources\Member\MemberResource;
 use Database\Factories\MemberFactory;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
+use Illuminate\Database\Eloquent\Attributes\UseResourceCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[UseResource(MemberResource::class)]
+#[UseResourceCollection(MemberCollection::class)]
 class Member extends Model
 {
     /** @use HasFactory<MemberFactory> */
@@ -32,6 +38,7 @@ class Member extends Model
         'gender',
         'biography',
         'phone',
+        'semester_id',
     ];
 
     protected function casts(): array
@@ -43,11 +50,6 @@ class Member extends Model
             'enrollment_date' => 'date:Y-m-d',
         ];
     }
-
-    protected $with = [
-        'program',
-        'user:id,email',
-    ];
 
     protected $hidden = [
         'user_id',
@@ -89,5 +91,13 @@ class Member extends Model
     public function semester()
     {
         return $this->belongsTo(Semester::class);
+    }
+
+    // LOGIC (Transfered to Service layer)
+
+    public function updateMember(array $data)
+    {
+        $this->update($data);
+        return $this;
     }
 }
