@@ -77,6 +77,8 @@ Route::middleware('firebase.auth')->group(function () {
         Route::get('/list', [MemberController::class, 'getMembersPagination']);
         Route::get('/member', [MemberController::class, 'getMember']);
         Route::get('/{id}/check', [MemberController::class, 'checkMemberRegistration']);
+        Route::get('/members/search', [MemberController::class, 'searchMembers']);
+
     });
     Route::apiResource('members', MemberController::class);
 
@@ -110,6 +112,13 @@ Route::middleware('firebase.auth')->group(function () {
     Route::apiResource('compliances', ComplianceController::class);
     Route::apiResource('requirements', RequirementController::class);
     Route::apiResource('offerings', OfferingController::class);
+
+    /**
+     * Officer
+     */
+    Route::prefix('officers')->group(function () {
+    Route::get('/', [MemberController::class, 'getOfficersInOrder']);
+});
 });
 
 // Legacy Sanctum route

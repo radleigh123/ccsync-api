@@ -206,6 +206,7 @@ class MemberController extends Controller
         $memberId = $id;
         $newRole = $request->input('role');
 
+        // i think it the role will change the admin as president or vice president
         if (! $user->hasAnyRole(['officer', 'admin'])) {
             return response()->json([
                 'message' => 'Unauthorized: Only officers or admins can promote members.'
@@ -213,7 +214,7 @@ class MemberController extends Controller
         }
 
         $member = Member::with('user')->findOrFail($memberId);
-        $student = $member->user;
+        $student = $member->user;   
 
         if ($user->hasRole('officer') && $newRole === 'admin') {
             return response()->json([
@@ -257,4 +258,79 @@ class MemberController extends Controller
             'member' => $member->load('user')
         ]);
     }
+
+    //to get officers in order
+
+    public function getOfficersInOrder()
+    {
+        try {
+            // Desired officer hierarchy
+            $roleOrder = [
+                'president',
+                'vice president',
+                'treasurer',
+                'auditor',
+                'representative',
+                'officer'
+            ];
+
+            // Get all users with any of these roles + load member info
+            $users = User::role($roleOrder)
+                ->with(['member', 'roles']) 
+                ->get();
+
+            // Sort based on role hierarchy
+            $sorted = $users->sortBy(function ($user) use ($roleOrder) {
+                return array_search($user->roles->first()->name, $roleOrder);
+            })->values();
+
+            // Map to clean output structure
+            $officers = $sorted->map(function ($user) {
+                $member = $user->member;
+
+                return [
+                    'id' => $user->id,
+                    'role' => $user->roles->first()->name,
+                    'email' => $user->email,
+                    'name' => trim(
+                        ($member->first_name ?? '') . ' ' .
+                        ($member->middle_name ? $member->middle_name . ' ' : '') .
+                        ($member->last_name ?? '') . ' ' .
+                        ($member->suffix ?? '')
+                    ),
+                    'member_info' => $member,
+                ];
+            });
+
+            return response()->json([
+                'message' => 'Officer list retrieved successfully.',
+                'officers' => $officers
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error retrieving officers',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function searchMembers(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (!$query) {
+            return response()->json([]);
+        }
+
+        $members = Member::where('first_name', 'LIKE', "%$query%")
+            ->orWhere('last_name', 'LIKE', "%$query%")
+            ->orWhere('id_school_number', 'LIKE', "%$query%")
+            ->with('user')
+            ->limit(10)
+            ->get();
+
+        return response()->json($members);
+    }
+
 }
