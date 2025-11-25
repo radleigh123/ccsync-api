@@ -76,7 +76,7 @@ Route::middleware('firebase.auth')->group(function () {
     Route::prefix('members')->group(function () {
         Route::get('/list', [MemberController::class, 'getMembersPagination']);
         Route::get('/member', [MemberController::class, 'getMember']);
-        Route::get('/{id}/check', [MemberController::class, 'checkMemberRegistration']);
+        Route::get('/{memberId}/check', [MemberController::class, 'checkMemberRegistration']);
         Route::get('/members/search', [MemberController::class, 'searchMembers']);
 
     });

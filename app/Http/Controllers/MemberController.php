@@ -8,6 +8,8 @@ use App\Http\Requests\Member\StoreMemberRequest;
 use App\Http\Requests\Member\UpdateMemberRequest;
 use App\Http\Resources\Member\MemberCollection;
 use App\Http\Resources\Member\MemberResource;
+use App\Models\Member;
+use App\Models\User;
 use App\Services\MemberService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -207,7 +209,7 @@ class MemberController extends Controller
             // Desired officer hierarchy
             $roleOrder = [
                 'president',
-                'vice president',
+                'vice-president',
                 'treasurer',
                 'auditor',
                 'representative',
