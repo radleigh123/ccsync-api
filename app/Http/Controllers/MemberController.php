@@ -230,17 +230,18 @@ class MemberController extends Controller
                 $member = $user->member;
 
                 return [
-                    'id' => $user->id,
-                    'role' => $user->roles->first()->name,
-                    'email' => $user->email,
-                    'name' => trim(
-                        ($member->first_name ?? '') . ' ' .
-                        ($member->middle_name ? $member->middle_name . ' ' : '') .
-                        ($member->last_name ?? '') . ' ' .
-                        ($member->suffix ?? '')
-                    ),
-                    'member_info' => $member,
-                ];
+                'id' => $member?->id ?? null,               // ← MEMBER ID
+                'user_id' => $user->id,                     // ← USER ID
+                'role' => $user->roles->first()->name ?? '',
+                'email' => $user->email,
+                'name' => $member ? trim(
+                    ($member->first_name ?? '') . ' ' .
+                    ($member->middle_name ? $member->middle_name . ' ' : '') .
+                    ($member->last_name ?? '') . ' ' .
+                    ($member->suffix ?? '')
+                ) : '',
+                'member_info' => $member,
+            ];
             });
 
             return response()->json([
