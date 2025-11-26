@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use App\Http\Resources\Requirement\ComplianceAuditCollection;
+use App\Http\Resources\Requirement\ComplianceAuditResource;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
+use Illuminate\Database\Eloquent\Attributes\UseResourceCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[UseResource(ComplianceAuditResource::class)]
+#[UseResourceCollection(ComplianceAuditCollection::class)]
 class ComplianceAudit extends Model
 {
     protected $fillable = [

@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use App\Http\Resources\Requirement\CompliancDocumentResource;
+use App\Http\Resources\Requirement\ComplianceDocumentCollection;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
+use Illuminate\Database\Eloquent\Attributes\UseResourceCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[UseResource(CompliancDocumentResource::class)]
+#[UseResourceCollection(ComplianceDocumentCollection::class)]
 class ComplianceDocument extends Model
 {
     protected $fillable = [

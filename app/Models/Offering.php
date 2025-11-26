@@ -2,10 +2,16 @@
 
 namespace App\Models;
 
+use App\Http\Resources\Requirement\OfferingCollection;
+use App\Http\Resources\Requirement\OfferingResource;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
+use Illuminate\Database\Eloquent\Attributes\UseResourceCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[UseResource(OfferingResource::class)]
+#[UseResourceCollection(OfferingCollection::class)]
 class Offering extends Model
 {
     protected $fillable = [
@@ -15,10 +21,6 @@ class Offering extends Model
         'close_at',
         'max_submissions',
         'active',
-    ];
-
-    protected $with = [
-        'requirement:id,name,type,semester_id',
     ];
 
     protected $hidden = [

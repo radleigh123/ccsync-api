@@ -6,7 +6,6 @@ use App\Helper\ApiResponse;
 use App\Http\Requests\Member\PromoteRequest;
 use App\Http\Requests\Member\StoreMemberRequest;
 use App\Http\Requests\Member\UpdateMemberRequest;
-use App\Http\Resources\Member\MemberCollection;
 use App\Http\Resources\Member\MemberResource;
 use App\Models\Member;
 use App\Models\User;
@@ -30,7 +29,7 @@ class MemberController extends Controller
      */
     public function index()
     {
-        return $this->success($this->service->getAll()->toResourceCollection());
+        return $this->service->getAll()->toResourceCollection();
     }
 
     /**

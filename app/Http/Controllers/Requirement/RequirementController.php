@@ -2,56 +2,43 @@
 
 namespace App\Http\Controllers\Requirement;
 
-use App\Enums\Type;
+use App\Helper\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Models\Requirement;
-use App\Models\Semester;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules\Enum;
+use App\Http\Requests\Requirement\StoreRequirementRequest;
+use App\Http\Requests\Requirement\UpdateRequirementRequest;
+use App\Http\Resources\Requirement\RequirementResource;
+use App\Services\RequirementService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class RequirementController extends Controller
 {
+    use ApiResponse;
+
+    protected RequirementService $service;
+
+    public function __construct(RequirementService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        // return new RequirementComplianceResource($compliance->load(['offering','documents']));
-        // return response()->json(['requirements' => Requirement::with('semester')->get()]);
-        return response()->json(['requirements' => Requirement::all()]);
+        return $this->service->getAll()->toResourceCollection();
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreRequirementRequest $request)
     {
-        if (! $request->has('semester_id')) {
-            return response()->json([
-                'message' => "Missing semester_id",
-            ], 400);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'type' => ['required', new Enum(Type::class)],
-            'semester_id' => 'integer',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $requirement = Requirement::create($request->all());
-        $requirement->load('semester');
-
-        return response()->json([
-            'requirement' => $requirement,
-        ], 201);
+        $req = $this->service->create($request->validated());
+        return $this->success(
+            $req->toResource(),
+            201,
+        );
     }
 
     /**
@@ -59,41 +46,35 @@ class RequirementController extends Controller
      */
     public function show(string $id)
     {
-        return response()->json(['requirement' => Requirement::findOrFail($id)]);
+        try {
+            return $this->success(
+                new RequirementResource($this->service->find($id)),
+                200,
+                "Successfully retrieved requirement"
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->error(message: "Requirement does not exist");
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500
+            );
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateRequirementRequest $request, string $id)
     {
-        if (! $request->has('semester_id')) {
-            return response()->json([
-                'message' => "Missing semester_id",
-            ], 400);
-        }
+        $validated = $request->validated();
+        $req = $this->service->update($id, $validated);
 
-        $req = Requirement::findOrFail($id);
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'type' => ['required', new Enum(Type::class)],
-            'semester_id' => 'integer',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors(),
-            ], 422);
-        }
-
-        $req->update($request->all());
-        $req->load('semester');
-
-        return response()->json([
-            'requirement' => $req,
-        ]);
+        return $this->success(
+            new RequirementResource($req),
+            200,
+            "Successfully updated requirement {$req->name}."
+        );
     }
 
     /**
@@ -101,8 +82,17 @@ class RequirementController extends Controller
      */
     public function destroy(string $id)
     {
-        $req = Requirement::findOrFail($id);
-        $req->delete();
-        return response()->json(['message' => 'Requirement removed successfully'], 200);
+        try {
+            $this->service->delete($id);
+            return $this->success(
+                message: 'Requirement removed successfully',
+                code: 204,
+            );
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500,
+            );
+        }
     }
 }
