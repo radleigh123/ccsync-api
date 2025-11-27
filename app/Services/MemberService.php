@@ -50,7 +50,7 @@ class MemberService
 
     public function findBySchoolNumber($idSchoolNumber)
     {
-        return Member::where('id_school_number', $idSchoolNumber)->firstOrFail();
+        return Member::with('user')->where('id_school_number', $idSchoolNumber)->firstOrFail();
     }
 
     public function checkEventRegistration($memberId, $eventId)

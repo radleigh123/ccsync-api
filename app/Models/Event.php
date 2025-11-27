@@ -5,17 +5,17 @@ namespace App\Models;
 use App\Enums\Status;
 use App\Http\Resources\Event\EventCollection;
 use App\Http\Resources\Event\EventResource;
-use App\Http\Resources\User\UserCollection;
 use Carbon\Carbon;
 use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Attributes\UseResource;
+use Illuminate\Database\Eloquent\Attributes\UseResourceCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[UseResource(EventResource::class)]
-#[UserCollection(EventCollection::class)]
+#[UseResourceCollection(EventCollection::class)]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */

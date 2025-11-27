@@ -33,4 +33,10 @@ class RequirementService
     {
         return Requirement::findOrFail($id)->delete();
     }
+
+    public function paginate($page = null, $perPage = null)
+    {
+        return Requirement::paginate(perPage: $perPage, page: $page)
+            ->toResourceCollection();
+    }
 }

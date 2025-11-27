@@ -22,6 +22,7 @@ class RequirementResource extends JsonResource
             'name'          => $this->name,
             'description'   => $this->description,
             'type'          => $this->type,
+            'is_active'     => $this->is_active,
 
             // Relationships
             'semester'      => new SemesterResource($this->whenLoaded('semester')),

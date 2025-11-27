@@ -18,7 +18,6 @@ class EventCollection extends ResourceCollection
             'data'  => $this->collection,
             'meta'  => [
                 'count' => $this->count(),
-                'total' => $this->total(),
             ],
         ];
     }

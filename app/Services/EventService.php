@@ -40,13 +40,13 @@ class EventService
         $member = Member::findOrFail($memberId);
 
         // Check if registration is open
-        if (!$event->is_registration_open) {
-            return new \Exception("Registration is not open for this event", 400);
+        if (! $event->is_registration_open) {
+            throw new \Exception("Registration is not open for this event", 400);
         }
 
         // Check if member is already registered
         if ($event->members()->where('member_id', $member->id)->exists()) {
-            return new \Exception("Member is already registered for this event", 400);
+            throw new \Exception("Member is already registered for this event", 400);
         }
 
         // Register the member
@@ -64,7 +64,7 @@ class EventService
 
         // Check if member is registered
         if (! $event->members()->where('member_id', $member->id)->exists()) {
-            return new \Exception("Member is not registered for this event", 400);
+            throw new \Exception("Member is not registered for this event", 400);
         }
 
         // Unregister the member
@@ -78,12 +78,16 @@ class EventService
         $event = Event::findOrFail($eventId);
 
         if ($page !== null || $perPage !== null) {
-            return $event->members()
-                ->select('first_name', 'last_name', 'year', 'program')
+            /* return $event->members()
+                ->select('members.id', 'first_name', 'last_name', 'year', 'program')
                 ->paginate(
                     perPage: $perPage,
                     page: $page
-                )->toResourceCollection();
+                )->toResourceCollection(); */
+            return $event->members()
+                ->withPivot('registered_at')
+                ->paginate(perPage: $perPage, page: $page)
+                ->toResourceCollection();
         }
 
         return $event->members()

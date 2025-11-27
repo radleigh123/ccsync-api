@@ -9,6 +9,7 @@ use App\Http\Requests\Requirement\UpdateRequirementRequest;
 use App\Http\Resources\Requirement\RequirementResource;
 use App\Services\RequirementService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class RequirementController extends Controller
 {
@@ -88,6 +89,20 @@ class RequirementController extends Controller
                 message: 'Requirement removed successfully',
                 code: 204,
             );
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500,
+            );
+        }
+    }
+
+    public function getPagination(Request $request)
+    {
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 20);
+        try {
+            return $this->service->paginate($page, $perPage);
         } catch (\Exception $e) {
             return $this->error(
                 message: $e->getMessage(),

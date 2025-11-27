@@ -27,7 +27,7 @@ class EventController extends Controller
     public function index(Request $request)
     {
         $events = $this->service->getAll($request->all());
-        return $this->success($events->toResourceCollection());
+        return $events->toResourceCollection();
     }
 
     /**
@@ -117,7 +117,7 @@ class EventController extends Controller
         );
 
         try {
-            $event = $this->service->addMemberToEvent($eventId, $validated['member_id']);
+            $this->service->addMemberToEvent($eventId, $validated['member_id']);
             return $this->success(
                 message: 'Member registered successfully',
                 code: 201,
@@ -127,7 +127,6 @@ class EventController extends Controller
         } catch (\Exception $e) {
             return $this->error(
                 message: $e->getMessage(),
-                code: 500
             );
         }
     }

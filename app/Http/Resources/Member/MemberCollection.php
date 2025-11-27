@@ -15,6 +15,7 @@ class MemberCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         return [
+            // 'members'   => $this->collection,
             'members'   => $this->collection,
             'meta'      => ['count' => $this->collection->count()],
         ];
