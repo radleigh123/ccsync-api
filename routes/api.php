@@ -4,6 +4,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Requirement\ComplianceController;
 use App\Http\Controllers\Requirement\OfferingController;
 use App\Http\Controllers\Requirement\RequirementController;
@@ -61,6 +62,14 @@ Route::middleware('firebase.auth')->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/userz', [UserController::class, 'index']);
     });
+
+    /**
+     * Role specific routes
+     */
+    Route::prefix('roles')->group(function () {
+        Route::get('/{role}', [RoleController::class, 'show']);
+    });
+    Route::apiResource('roles', RoleController::class);
 
     /**
      * Profile specific routes
