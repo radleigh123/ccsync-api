@@ -3,6 +3,7 @@
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Requirement\ComplianceController;
@@ -67,6 +68,11 @@ Route::middleware('firebase.auth')->group(function () {
      * Role specific routes
      */
     Route::prefix('roles')->group(function () {
+        Route::prefix('permissions')->group(function () {
+            Route::get('/{permission}', [PermissionController::class, 'show']);
+        });
+        Route::apiResource('permissions', PermissionController::class);
+
         Route::get('/{role}', [RoleController::class, 'show']);
     });
     Route::apiResource('roles', RoleController::class);

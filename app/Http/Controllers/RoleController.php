@@ -48,19 +48,39 @@ class RoleController extends Controller
         ]);
     }
 
+    // BUG: Be careful, updating main roles, it will break the system
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validated = $request->validate([
+            'role' => 'required|string|unique:roles,name',
+        ]);
+        $role = $this->service->update($id, $validated['role']);
+        return response()->json([
+            'success'   => true,
+            'role'      => $role,
+        ]);
     }
 
+    // BUG: Be careful, deleting main roles, it will break the system
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $this->service->delete($id);
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully deleted role",
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 }
