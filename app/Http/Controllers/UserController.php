@@ -128,7 +128,7 @@ class UserController extends Controller
                 'firebase_user' => $userWithFirebase['firebaseUser'],
             ]);
         } catch (\Exception $e) {
-            return $this->error(message: $e->getMessage(), code: $e->getCode());
+            return $this->error(message: $e->getMessage());
         }
     }
 
