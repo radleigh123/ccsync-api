@@ -92,7 +92,7 @@ Route::middleware('firebase.auth')->group(function () {
         Route::get('/list', [MemberController::class, 'getMembersPagination']);
         Route::get('/member', [MemberController::class, 'getMember']);
         Route::get('/{memberId}/check', [MemberController::class, 'checkMemberRegistration']);
-        Route::get('/search', [MemberController::class, 'searchMembers']);
+        Route::post('/search', [MemberController::class, 'searchMembers']);
 
     });
     Route::apiResource('members', MemberController::class);
