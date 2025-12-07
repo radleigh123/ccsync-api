@@ -265,9 +265,7 @@ class MemberController extends Controller
             return response()->json([]);
         }
 
-        $members = Member::where('first_name', 'LIKE', "%$query%")
-            ->orWhere('last_name', 'LIKE', "%$query%")
-            ->orWhere('id_school_number', 'LIKE', "%$query%")
+        $members = Member::where('id_school_number', 'LIKE', "%$query%")
             ->with('user')
             ->limit(10)
             ->get();
