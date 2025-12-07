@@ -202,10 +202,65 @@ class MemberController extends Controller
 
     //to get officers in order
 
+    // public function getOfficersInOrder()
+    // {
+    //     try {
+    //         // Desired officer hierarchy
+    //         $roleOrder = [
+    //             'president',
+    //             'vice-president',
+    //             'treasurer',
+    //             'auditor',
+    //             'representative',
+    //             'officer'
+    //         ];
+
+    //         // Get all users with any of these roles + load member info
+    //         $users = User::role($roleOrder)
+    //             ->with(['member', 'roles']) 
+    //             ->get();
+
+    //         // Sort based on role hierarchy
+    //         $sorted = $users->sortBy(function ($user) use ($roleOrder) {
+    //             return array_search($user->roles->first()->name, $roleOrder);
+    //         })->values();
+
+    //         // Map to clean output structure
+    //         $officers = $sorted->map(function ($user) {
+    //             $member = $user->member;
+
+    //             return [
+    //             'id' => $member?->id ?? null,               // ← MEMBER ID
+    //             'user_id' => $user->id,                     // ← USER ID
+    //             'role' => $user->roles->first()->name ?? '',
+    //             'email' => $user->email,
+    //             'name' => $member ? trim(
+    //                 ($member->first_name ?? '') . ' ' .
+    //                 ($member->middle_name ? $member->middle_name . ' ' : '') .
+    //                 ($member->last_name ?? '') . ' ' .
+    //                 ($member->suffix ?? '')
+    //             ) : '',
+    //             'member_info' => $member,
+    //         ];
+    //         });
+
+    //         return response()->json([
+    //             'message' => 'Officer list retrieved successfully.',
+    //             'officers' => $officers
+    //         ]);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'message' => 'Error retrieving officers',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
     public function getOfficersInOrder()
     {
         try {
-            // Desired officer hierarchy
+            // Officer role hierarchy
             $roleOrder = [
                 'president',
                 'vice-president',
@@ -215,33 +270,35 @@ class MemberController extends Controller
                 'officer'
             ];
 
-            // Get all users with any of these roles + load member info
-            $users = User::role($roleOrder)
+            // Get only users whose Spatie roles match officer roles
+            $users = User::whereHas('roles', function ($q) use ($roleOrder) {
+                    $q->whereIn('name', $roleOrder);
+                })
                 ->with(['member', 'roles']) 
                 ->get();
 
-            // Sort based on role hierarchy
+            // Sort officers based on hierarchy
             $sorted = $users->sortBy(function ($user) use ($roleOrder) {
                 return array_search($user->roles->first()->name, $roleOrder);
             })->values();
 
-            // Map to clean output structure
+            // Standardized API response
             $officers = $sorted->map(function ($user) {
                 $member = $user->member;
 
                 return [
-                'id' => $member?->id ?? null,               // ← MEMBER ID
-                'user_id' => $user->id,                     // ← USER ID
-                'role' => $user->roles->first()->name ?? '',
-                'email' => $user->email,
-                'name' => $member ? trim(
-                    ($member->first_name ?? '') . ' ' .
-                    ($member->middle_name ? $member->middle_name . ' ' : '') .
-                    ($member->last_name ?? '') . ' ' .
-                    ($member->suffix ?? '')
-                ) : '',
-                'member_info' => $member,
-            ];
+                    'id' => $member?->id ?? null,
+                    'user_id' => $user->id,
+                    'role' => $user->roles->first()->name,
+                    'email' => $user->email,
+                    'name' => $member ? trim(
+                        ($member->first_name ?? '') . ' ' .
+                        ($member->middle_name ? $member->middle_name . ' ' : '') .
+                        ($member->last_name ?? '') . ' ' .
+                        ($member->suffix ?? '')
+                    ) : $user->email,
+                    'member_info' => $member,
+                ];
             });
 
             return response()->json([
@@ -256,6 +313,7 @@ class MemberController extends Controller
             ], 500);
         }
     }
+
 
     public function searchMembers(Request $request)
     {
