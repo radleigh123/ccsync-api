@@ -61,7 +61,34 @@ class PermissionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-            ]);
+            ], 400);
         }
+    }
+
+    public function assignPermissionToRole(Request $request, string $role)
+    {
+        $validated = $request->validate(['permission' => 'required|string|exists:permissions,name']);
+        try {
+            $permission = $this->service->givePermissionToRole($role, $validated['permission']);
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully assigned permission to $permission->name",
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function revokePermissionToRole(Request $request, string $role)
+    {
+        $validated = $request->validate(['permission' => 'required|string|exists:permissions,name']);
+        $permission = $this->service->deletePermissionToRole($role, $validated['permission']);
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully revoked permission to $permission->name",
+        ]);
     }
 }

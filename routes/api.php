@@ -67,15 +67,19 @@ Route::middleware('firebase.auth')->group(function () {
     /**
      * Role specific routes
      */
-    Route::prefix('roles')->group(function () {
-        Route::prefix('permissions')->group(function () {
-            Route::get('/{permission}', [PermissionController::class, 'show']);
-        });
-        Route::apiResource('permissions', PermissionController::class);
+    Route::middleware(['role:president|vice-president'])->group(function () {
+        Route::prefix('roles')->group(function () {
+            Route::prefix('permissions')->group(function () {
+                Route::get('/{permission}', [PermissionController::class, 'show']);
+                Route::post('/{role}/add', [PermissionController::class, 'assignPermissionToRole']);
+                Route::delete('/{role}/delete', [PermissionController::class, 'revokePermissionToRole']);
+            });
+            Route::apiResource('permissions', PermissionController::class);
 
-        Route::get('/{role}', [RoleController::class, 'show']);
+            Route::get('/{role}', [RoleController::class, 'show']);
+        });
+        Route::apiResource('roles', RoleController::class);
     });
-    Route::apiResource('roles', RoleController::class);
 
     /**
      * Profile specific routes

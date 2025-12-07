@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\User;
+use Exception;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class PermissionService
 {
@@ -35,5 +37,19 @@ class PermissionService
     public function delete(string $id)
     {
         return Permission::findOrFail($id)->delete();
+    }
+
+    public function givePermissionToRole(string $role, string $permission)
+    {
+        $role = Role::findByName($role);
+
+        return $role->givePermissionTo($permission);
+    }
+
+    public function deletePermissionToRole(string $role, string $permission)
+    {
+        $role = Role::findByName($role);
+
+        return $role->revokePermissionTo($permission);
     }
 }
