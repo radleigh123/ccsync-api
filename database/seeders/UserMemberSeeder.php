@@ -125,7 +125,7 @@ class UserMemberSeeder extends Seeder
             'display_name' => 'President',
             'email' => 'keaneradleigh@gmail.com',
             'password' => '123456',
-            'firebase_uid' => 'NwVUqIRDldM0qa8mO6npUN1dy7r2',
+            'firebase_uid' => 'Z5rc8fzElHbMGqQA3Nua3bfi23j1',
         ]);
         $admin->assignRole([$studentRole, $genOfficerRole, $presidentRole]);
         Member::factory()->create([
@@ -185,8 +185,8 @@ class UserMemberSeeder extends Seeder
             ->insert(); */
 
         // --- Bulk random officers ---
-        User::factory(20)->create()->each(function ($user) use ($genOfficerRole, $officerRole) {
-            $user->assignRole([$genOfficerRole, $officerRole]);
+        User::factory(20)->create()->each(function ($user) use ($studentRole, $genOfficerRole, $officerRole) {
+            $user->assignRole([$studentRole, $genOfficerRole, $officerRole]);
 
             $year = fake()->numberBetween(1, 4);
             $enrollmentDate = date("Y-m-d", strtotime("- {$year} years", strtotime("06 September")));
