@@ -202,6 +202,7 @@ class UserMemberSeeder extends Seeder
                 'year'              => $year,
                 'semester_id'       => Semester::orderByDesc('id')->first(),
                 'id_school_number'  => $user->id_school_number,
+                'is_paid'           => true,
             ]);
         });
 

@@ -23,10 +23,8 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        // $fName = $this->faker->name();
-        // $lName = $this->faker->lastName();
-        $fName = \fake()->unique()->firstName();
-        $lName = \fake()->unique()->lastName();
+        $fName = fake()->unique()->firstName();
+        $lName = fake()->unique()->lastName();
         $userName = "$fName.$lName";
 
         return [

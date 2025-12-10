@@ -97,9 +97,16 @@ Route::middleware('firebase.auth')->group(function () {
         Route::get('/member', [MemberController::class, 'getMember']);
         Route::get('/{memberId}/check', [MemberController::class, 'checkMemberRegistration']);
         Route::post('/search', [MemberController::class, 'searchMembers']);
+        Route::middleware(['role:officer'])->group(function () {
+            Route::get('/', [MemberController::class, 'index']);
+            Route::post('/', [MemberController::class, 'store']);
+        });
+        Route::get('/{id}', [MemberController::class, 'show']);
+        Route::put('/{id}', [MemberController::class, 'update']);
+        Route::delete('/{id}', [MemberController::class, 'destroy']);
 
     });
-    Route::apiResource('members', MemberController::class);
+    // Route::apiResource('members', MemberController::class);
 
     Route::middleware(['permission:promote members|promote officers'])->group(function () {
         Route::prefix('role')->group(function () {

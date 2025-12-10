@@ -131,6 +131,11 @@ class MemberController extends Controller
                 200,
                 "Successfully retrieved {$member->first_name} by School ID"
             );
+        } catch (ModelNotFoundException $e) {
+            return $this->error(
+                message: "Member not found or is not yet registered.",
+                code: 404,
+            );
         } catch (\Exception $e) {
             return $this->error(
                 message: $e->getMessage(),
@@ -289,7 +294,7 @@ class MemberController extends Controller
                 return [
                     'id' => $member?->id ?? null,
                     'user_id' => $user->id,
-                    'role' => $user->roles->first()->name,
+                    'role' => $user->getRoleNames()->last(), // ["student", "officer", "representative"]
                     'email' => $user->email,
                     'name' => $member ? trim(
                         ($member->first_name ?? '') . ' ' .
