@@ -22,6 +22,7 @@ class Requirement extends Model
         'name',
         'description',
         'type',
+        'is_active',
         'semester_id',
     ];
 

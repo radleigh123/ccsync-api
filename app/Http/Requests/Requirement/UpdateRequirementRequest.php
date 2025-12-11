@@ -27,6 +27,7 @@ class UpdateRequirementRequest extends FormRequest
             'name'          => 'sometimes|string|max:255',
             'description'   => 'sometimes|string',
             'type'          => [Rule::enum(Type::class)],
+            'is_active'     => 'sometimes|boolean',
             'semester_id'   => 'sometimes|integer',
         ];
     }
