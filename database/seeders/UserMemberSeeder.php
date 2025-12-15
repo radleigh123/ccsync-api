@@ -82,6 +82,20 @@ class UserMemberSeeder extends Seeder
             'id_school_number'  => $student->id_school_number,
         ]);
 
+        $student = User::factory()->create([
+            'display_name'  => 'Keene Inting',
+            'email'         => 'keane@gmail.com',
+            'firebase_uid'  => 'IkfoLmmyrWfLQ3eKkYPjOVKXMdv2',
+        ]);
+        $student->assignRole($studentRole);
+        Member::factory()->create([
+            'user_id'           => $student,
+            'first_name'        => $student->display_name,
+            'last_name'         => 'Member',
+            'semester_id'       => $semester,
+            'id_school_number'  => $student->id_school_number,
+        ]);
+
         $genOfficerRole = Role::firstOrCreate(['name' => 'officer']);
 
         $roles = array('secretary', 'treasurer', 'auditor', 'representative');
