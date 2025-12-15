@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('password');
             $table->unsignedInteger('id_school_number')->unique();
             $table->rememberToken();
+            $table->string('avatar_path')->nullable();
             $table->timestamps();
         });
 
