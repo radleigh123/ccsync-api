@@ -86,7 +86,7 @@ class ProfileController extends Controller
     {
         $member = $this->memberService->find($memberId);
         $user = $member->user;
-        /* try {
+        try {
             $member = $this->memberService->find($memberId);
             $user = $member->user;
 
@@ -100,10 +100,10 @@ class ProfileController extends Controller
             return $this->success(data: $url, message: "Successfully retrieved profile picture", code: 200);
         } catch (\Exception $e) {
             return $this->error(message: $e->getMessage());
-        } */
-        return response()->json([
+        }
+        /* return response()->json([
             'member' => $member,
             'user'  => $user,
-        ]);
+        ]); */
     }
 }

@@ -86,6 +86,7 @@ class UserMemberSeeder extends Seeder
             'display_name'  => 'Keene Inting',
             'email'         => 'keane@gmail.com',
             'firebase_uid'  => 'IkfoLmmyrWfLQ3eKkYPjOVKXMdv2',
+            'avatar_path' => 'profile_pictures/4YoGW3h4kl7rEFGVMZeJtNB0iewFzaGdF046xJ1P.jpg',
         ]);
         $student->assignRole($studentRole);
         Member::factory()->create([
@@ -140,6 +141,7 @@ class UserMemberSeeder extends Seeder
             'email' => 'keaneradleigh@gmail.com',
             'password' => '123456',
             'firebase_uid' => 'Z5rc8fzElHbMGqQA3Nua3bfi23j1',
+            'avatar_path' => 'profile_pictures/a2l8JI6xxGO9NPwzYMTEMtoRLMKBIPZyYbMDlAoS.jpg',
         ]);
         $admin->assignRole([$studentRole, $genOfficerRole, $presidentRole]);
         Member::factory()->create([
