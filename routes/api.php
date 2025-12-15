@@ -154,6 +154,13 @@ Route::middleware('firebase.auth')->group(function () {
     Route::prefix('officers')->group(function () {
         Route::get('/', [MemberController::class, 'getOfficersInOrder']);
     });
+
+    Route::get('/debug-s3', function () {
+        return [
+            'AWS_BUCKET' => env('AWS_BUCKET'),
+            'AWS_DEFAULT_REGION' => env('AWS_DEFAULT_REGION'),
+        ];
+    });
 });
 
 // Legacy Sanctum route
