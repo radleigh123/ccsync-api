@@ -68,7 +68,7 @@ class ProfileController extends Controller
         try {
             // Save to bucket
             $path = $request->file('profile_picture')->store('profile_pictures', 's3');
-            $disk = DiskHelper::getS3Disk('s3');
+            $disk = DiskHelper::getS3Disk();
             $url = $disk->temporaryUrl($path, now()->addMinutes(60));
             $result = $this->userService->updateProfilePath($path, $request->user()->id);
 
@@ -94,7 +94,7 @@ class ProfileController extends Controller
                 throw new \Exception("No profile picture found for this user");
             }
 
-            $disk = DiskHelper::getS3Disk('s3');
+            $disk = DiskHelper::getS3Disk();
             $url = $disk->temporaryUrl($user->avatar_path, now()->addMinutes(60));
 
             return $this->success(data: $url, message: "Successfully retrieved profile picture", code: 200);

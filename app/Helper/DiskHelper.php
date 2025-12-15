@@ -11,8 +11,8 @@ class DiskHelper
      *
      * @return \Illuminate\Filesystem\FilesystemAdapter
      */
-    public static function getS3Disk(string $diskName)
+    public static function getS3Disk()
     {
-        return Storage::disk($diskName);
+        return Storage::disk('s3');
     }
 }
