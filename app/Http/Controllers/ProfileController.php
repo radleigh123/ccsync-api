@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Helper\ApiResponse;
+use App\Helper\DiskHelper;
 use App\Http\Requests\Member\UpdateProfileRequest;
 use App\Http\Requests\User\ChangePasswordRequest;
 use App\Services\MemberService;
 use App\Services\UserService;
+use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
@@ -55,5 +57,53 @@ class ProfileController extends Controller
         } catch (\Exception $e) {
             return $this->error(message: $e->getMessage());
         }
+    }
+
+    public function uploadPicture(Request $request)
+    {
+        $request->validate([
+            'profile_picture' => 'required|file|image|max:5120' // 5mb MAX
+        ]);
+
+        try {
+            // Save to bucket
+            $path = $request->file('profile_picture')->store('profile_pictures', 's3');
+            $disk = DiskHelper::getS3Disk();
+            $url = $disk->temporaryUrl($path, now()->addMinutes(60));
+            $result = $this->userService->updateProfilePath($path, $request->user()->id);
+
+            if (! $result) {
+                throw new \Exception("Something went wrong storing profile picture path");
+            }
+
+            return $this->success(data: $url, message: "Successfully updated profile picture", code: 201);
+        } catch (\Exception $e) {
+            return $this->error(message: $e->getMessage());
+        }
+    }
+
+    public function getPicture(string $memberId)
+    {
+        $member = $this->memberService->find($memberId);
+        $user = $member->user;
+        try {
+            $member = $this->memberService->find($memberId);
+            $user = $member->user;
+
+            if (! $user->avatar_path) {
+                throw new \Exception("No profile picture found for this user");
+            }
+
+            $disk = DiskHelper::getS3Disk();
+            $url = $disk->temporaryUrl($user->avatar_path, now()->addMinutes(60));
+
+            return $this->success(data: $url, message: "Successfully retrieved profile picture", code: 200);
+        } catch (\Exception $e) {
+            return $this->error(message: $e->getMessage());
+        }
+        /* return response()->json([
+            'member' => $member,
+            'user'  => $user,
+        ]); */
     }
 }

@@ -88,6 +88,8 @@ Route::middleware('firebase.auth')->group(function () {
     Route::prefix('profile')->group(function () {
         Route::put('/{memberId}/edit', [ProfileController::class, 'update']);
         Route::put('/{memberId}/editPassword', [ProfileController::class, 'updatePassword']);
+        Route::post('/profile-picture', [ProfileController::class, 'uploadPicture']);
+        Route::get('/{memberId}/profile-picture', [ProfileController::class, 'getPicture']);
     });
 
     /**
@@ -151,6 +153,13 @@ Route::middleware('firebase.auth')->group(function () {
      */
     Route::prefix('officers')->group(function () {
         Route::get('/', [MemberController::class, 'getOfficersInOrder']);
+    });
+
+    Route::get('/debug-s3', function () {
+        return [
+            'AWS_BUCKET' => env('AWS_BUCKET'),
+            'AWS_DEFAULT_REGION' => env('AWS_DEFAULT_REGION'),
+        ];
     });
 });
 

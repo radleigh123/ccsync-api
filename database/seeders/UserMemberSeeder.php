@@ -82,9 +82,36 @@ class UserMemberSeeder extends Seeder
             'id_school_number'  => $student->id_school_number,
         ]);
 
+        $student = User::factory()->create([
+            'display_name'  => 'Keene Inting',
+            'email'         => 'keane@gmail.com',
+            'firebase_uid'  => 'IkfoLmmyrWfLQ3eKkYPjOVKXMdv2',
+            'avatar_path' => 'profile_pictures/4YoGW3h4kl7rEFGVMZeJtNB0iewFzaGdF046xJ1P.jpg',
+        ]);
+        $student->assignRole($studentRole);
+        Member::factory()->create([
+            'user_id'           => $student,
+            'first_name'        => $student->display_name,
+            'last_name'         => 'Member',
+            'semester_id'       => $semester,
+            'id_school_number'  => $student->id_school_number,
+        ]);
+
         $genOfficerRole = Role::firstOrCreate(['name' => 'officer']);
 
-        $roles = array('secretary', 'treasurer', 'auditor', 'representative');
+        $roles = array(
+            'secretary',
+            'assistant-secretary',
+            'treasurer',
+            'assistant-treasurer',
+            'auditor',
+            'PIO-internal',
+            'PIO-external',
+            'representative-1',
+            'representative-2',
+            'representative-3',
+            'representative-4',
+        );
 
         for ($i = 0; $i < count($roles); $i++) {
             $role = $roles[$i];
@@ -126,6 +153,7 @@ class UserMemberSeeder extends Seeder
             'email' => 'keaneradleigh@gmail.com',
             'password' => '123456',
             'firebase_uid' => 'Z5rc8fzElHbMGqQA3Nua3bfi23j1',
+            'avatar_path' => 'profile_pictures/a2l8JI6xxGO9NPwzYMTEMtoRLMKBIPZyYbMDlAoS.jpg',
         ]);
         $admin->assignRole([$studentRole, $genOfficerRole, $presidentRole]);
         Member::factory()->create([
@@ -140,20 +168,36 @@ class UserMemberSeeder extends Seeder
             'id_school_number'  => $admin->id_school_number,
         ]);
 
-        $vicePresidentRole = Role::firstOrCreate(['name' => 'vice-president'])
+        $vicePresidentInternalRole = Role::firstOrCreate(['name' => 'vice-president-internal'])
             ->syncPermissions(Permission::all());
 
         $admin2 = User::factory()->create([
-            'display_name' => 'Vice-President',
-            'email' => 'vice-president@gmail.com',
+            'display_name' => 'Vice-President-INTERNAL',
+            'email' => 'vice-president-internal@gmail.com',
         ]);
-        $admin2->assignRole([$studentRole, $genOfficerRole, $vicePresidentRole]);
+        $admin2->assignRole([$studentRole, $genOfficerRole, $vicePresidentInternalRole]);
         Member::factory()->create([
             'user_id'           => $admin2,
             'first_name'        => $admin2->display_name,
             'last_name'         => 'Member',
             'semester_id'       => $semester,
             'id_school_number'  => $admin2->id_school_number,
+        ]);
+
+        $vicePresidentExternalRole = Role::firstOrCreate(['name' => 'vice-president-external'])
+            ->syncPermissions(Permission::all());
+
+        $admin3 = User::factory()->create([
+            'display_name' => 'Vice-President-INTERNAL',
+            'email' => 'vice-president-external@gmail.com',
+        ]);
+        $admin3->assignRole([$studentRole, $genOfficerRole, $vicePresidentExternalRole]);
+        Member::factory()->create([
+            'user_id'           => $admin3,
+            'first_name'        => $admin3->display_name,
+            'last_name'         => 'Member',
+            'semester_id'       => $semester,
+            'id_school_number'  => $admin3->id_school_number,
         ]);
 
         // --- Bulk unregistered members ---
@@ -184,8 +228,24 @@ class UserMemberSeeder extends Seeder
             ->count(10)
             ->insert(); */
 
+
         // --- Bulk random officers ---
         User::factory(20)->create()->each(function ($user) use ($studentRole, $genOfficerRole, $officerRole) {
+            // Update officerRole to be random officers between [secretary to representative-4]
+            $officerRole = Role::where('name', 'like', '%' . fake()->randomElement([
+                'secretary',
+                'assistant-secretary',
+                'treasurer',
+                'assistant-treasurer',
+                'auditor',
+                'PIO-internal',
+                'PIO-external',
+                'representative-1',
+                'representative-2',
+                'representative-3',
+                'representative-4',
+            ]) . '%')->first();
+
             $user->assignRole([$studentRole, $genOfficerRole, $officerRole]);
 
             $year = fake()->numberBetween(1, 4);

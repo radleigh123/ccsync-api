@@ -255,4 +255,12 @@ class UserService
         $user->save();
         return $user;
     }
+
+    public function updateProfilePath(string $path, string $userId)
+    {
+        $user = User::findOrFail($userId);
+        $user->avatar_path = $path;
+        $user->save();
+        return true;
+    }
 }
