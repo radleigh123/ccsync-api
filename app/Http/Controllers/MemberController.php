@@ -173,8 +173,9 @@ class MemberController extends Controller
         $user = $request->user(); // Get current user
 
         try {
+            $promote = $this->service->promoteMemberToOfficer($user, $memberId, $newRole);
             return $this->success(
-                $this->service->promoteMemberToOfficer($user, $memberId, $newRole),
+                $promote,
                 200,
                 "Successfully promoted member to {$newRole}."
             );
@@ -193,8 +194,9 @@ class MemberController extends Controller
         $user = $request->user(); // Get current user
 
         try {
+            $demote = $this->service->demoteOfficerToRole($user, $memberId, $newRole);
             return $this->success(
-                $this->service->demoteOfficerToRole($user, $memberId, $newRole),
+                $demote,
                 200,
                 "Successfully demoted officer to {$newRole}."
             );
@@ -204,63 +206,6 @@ class MemberController extends Controller
             );
         }
     }
-
-    //to get officers in order
-
-    // public function getOfficersInOrder()
-    // {
-    //     try {
-    //         // Desired officer hierarchy
-    //         $roleOrder = [
-    //             'president',
-    //             'vice-president',
-    //             'treasurer',
-    //             'auditor',
-    //             'representative',
-    //             'officer'
-    //         ];
-
-    //         // Get all users with any of these roles + load member info
-    //         $users = User::role($roleOrder)
-    //             ->with(['member', 'roles']) 
-    //             ->get();
-
-    //         // Sort based on role hierarchy
-    //         $sorted = $users->sortBy(function ($user) use ($roleOrder) {
-    //             return array_search($user->roles->first()->name, $roleOrder);
-    //         })->values();
-
-    //         // Map to clean output structure
-    //         $officers = $sorted->map(function ($user) {
-    //             $member = $user->member;
-
-    //             return [
-    //             'id' => $member?->id ?? null,               // ← MEMBER ID
-    //             'user_id' => $user->id,                     // ← USER ID
-    //             'role' => $user->roles->first()->name ?? '',
-    //             'email' => $user->email,
-    //             'name' => $member ? trim(
-    //                 ($member->first_name ?? '') . ' ' .
-    //                 ($member->middle_name ? $member->middle_name . ' ' : '') .
-    //                 ($member->last_name ?? '') . ' ' .
-    //                 ($member->suffix ?? '')
-    //             ) : '',
-    //             'member_info' => $member,
-    //         ];
-    //         });
-
-    //         return response()->json([
-    //             'message' => 'Officer list retrieved successfully.',
-    //             'officers' => $officers
-    //         ]);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'message' => 'Error retrieving officers',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
 
     public function getOfficersInOrder()
     {

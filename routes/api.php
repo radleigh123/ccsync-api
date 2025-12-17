@@ -139,9 +139,9 @@ Route::middleware('firebase.auth')->group(function () {
             ->middleware('role:officer');
     });
     Route::apiResource('compliances', ComplianceController::class);
-    
-    Route::apiResource('compliance-audits', ComplianceAuditController::class, ['only' => ['index', 'show']]);
-    
+
+    // Route::apiResource('compliance-audits', ComplianceAuditController::class, ['only' => ['index', 'show']]);
+
     Route::prefix('requirements')->group(function () {
         Route::get('/list', [RequirementController::class, 'getPagination']);
     });

@@ -33,6 +33,8 @@ return [
         App\Models\Member::class,
         App\Models\Event::class,
         App\Models\Semester::class,
+        Spatie\Permission\Models\Permission::class,
+        Spatie\Permission\Models\Role::class,
     ],
 
     /*
