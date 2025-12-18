@@ -132,9 +132,9 @@ Route::middleware('firebase.auth')->group(function () {
      * Requirement specific routes
      */
     Route::prefix('compliances')->group(function () {
+        Route::get('/list', [ComplianceController::class, 'getPagination']);
         Route::post('/{id}/submit', [Compliance::class, 'store'])
             ->middleware('role:student');
-
         Route::post('/{id}/verify', [Compliance::class, 'update'])
             ->middleware('role:officer');
     });
@@ -146,7 +146,7 @@ Route::middleware('firebase.auth')->group(function () {
         Route::get('/list', [RequirementController::class, 'getPagination']);
     });
     Route::apiResource('requirements', RequirementController::class);
-    Route::apiResource('offerings', OfferingController::class);
+    // Route::apiResource('offerings', OfferingController::class); // NOTE: IMPORTANT WIP, currently using simple compliance & requirement CRUD
 
     /**
      * Officer

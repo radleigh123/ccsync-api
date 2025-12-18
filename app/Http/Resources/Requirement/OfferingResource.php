@@ -17,13 +17,14 @@ class OfferingResource extends JsonResource
     {
         return [
             'id'                => $this->id,
-            'requirement_id'    => $this->requirement_id,
+            // 'requirement_id'    => $this->requirement_id,
             'open_at'           => $this->open_at,
             'close_at'          => $this->close_at,
             'max_submissions'   => $this->max_submissions,
             'active'            => $this->active,
 
             'semester'          => new SemesterResource($this->whenLoaded('semester')),
+            'requirement'       => new RequirementResource($this->whenLoaded('requirement')),
         ];
     }
 }

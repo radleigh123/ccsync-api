@@ -63,4 +63,13 @@ class ComplianceService
     {
         return Compliance::findOrFail($id)->delete();
     }
+
+    public function paginate($page = null, $perPage = null)
+    {
+        /* return Compliance::paginate(perPage: $perPage, page: $page)
+            ->toResourceCollection(); */
+        return Compliance::with(['member'])
+            ->paginate(perPage: $perPage, page: $page)
+            ->toResourceCollection();
+    }
 }

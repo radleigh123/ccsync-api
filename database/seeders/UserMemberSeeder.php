@@ -86,7 +86,7 @@ class UserMemberSeeder extends Seeder
             'display_name'  => 'Keene.Inting',
             'email'         => 'keane@gmail.com',
             'firebase_uid'  => 'IkfoLmmyrWfLQ3eKkYPjOVKXMdv2',
-            'avatar_path' => 'profile_pictures/4YoGW3h4kl7rEFGVMZeJtNB0iewFzaGdF046xJ1P.jpg',
+            'avatar_path'   => 'profile_pictures/4YoGW3h4kl7rEFGVMZeJtNB0iewFzaGdF046xJ1P.jpg',
         ]);
         $student->assignRole($studentRole);
         Member::factory()->create([
@@ -149,11 +149,11 @@ class UserMemberSeeder extends Seeder
             ->syncPermissions(Permission::all());
 
         $admin = User::factory()->create([
-            'display_name' => 'President',
-            'email' => 'keaneradleigh@gmail.com',
-            'password' => '123456',
-            'firebase_uid' => 'Z5rc8fzElHbMGqQA3Nua3bfi23j1',
-            'avatar_path' => 'profile_pictures/a2l8JI6xxGO9NPwzYMTEMtoRLMKBIPZyYbMDlAoS.jpg',
+            'display_name'  => 'President',
+            'email'         => 'keaneradleigh@gmail.com',
+            'password'      => '123456',
+            'firebase_uid'  => 'Z5rc8fzElHbMGqQA3Nua3bfi23j1',
+            'avatar_path'   => 'profile_pictures/a2l8JI6xxGO9NPwzYMTEMtoRLMKBIPZyYbMDlAoS.jpg',
         ]);
         $admin->assignRole([$studentRole, $genOfficerRole, $presidentRole]);
         Member::factory()->create([
@@ -172,8 +172,11 @@ class UserMemberSeeder extends Seeder
             ->syncPermissions(Permission::all());
 
         $admin2 = User::factory()->create([
-            'display_name' => 'Vice-President-INTERNAL',
-            'email' => 'vice-president-internal@gmail.com',
+            'display_name'  => 'Vice-President-INTERNAL',
+            'email'         => 'vice-president-internal@gmail.com',
+            'password'      => '123456',
+            'firebase_uid'  => 'ji31DOct3TYBiPjH24X4VP6yze23',
+            'avatar_path'   => 'profile_pictures/a2l8JI6xxGO9NPwzYMTEMtoRLMKBIPZyYbMDlAoS.jpg',
         ]);
         $admin2->assignRole([$studentRole, $genOfficerRole, $vicePresidentInternalRole]);
         Member::factory()->create([
@@ -188,8 +191,11 @@ class UserMemberSeeder extends Seeder
             ->syncPermissions(Permission::all());
 
         $admin3 = User::factory()->create([
-            'display_name' => 'Vice-President-INTERNAL',
-            'email' => 'vice-president-external@gmail.com',
+            'display_name'  => 'Vice-President-INTERNAL',
+            'email'         => 'vice-president-external@gmail.com',
+            'password'      => '123456',
+            'firebase_uid'  => 'jSqpnGytRMX7FrWYAmIqlxt9w3k2',
+            'avatar_path'   => 'profile_pictures/a2l8JI6xxGO9NPwzYMTEMtoRLMKBIPZyYbMDlAoS.jpg',
         ]);
         $admin3->assignRole([$studentRole, $genOfficerRole, $vicePresidentExternalRole]);
         Member::factory()->create([

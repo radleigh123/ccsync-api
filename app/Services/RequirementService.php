@@ -13,7 +13,8 @@ class RequirementService
 
     public function create(array $data)
     {
-        return Requirement::create($data)->load('semester');
+        $req = Requirement::create($data);
+        return $req->load(['semester']);
     }
 
     public function find(string $id)

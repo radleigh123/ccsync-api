@@ -25,7 +25,7 @@ class StoreRequirementRequest extends FormRequest
     {
         return [
             'name'          => 'required|string|max:255',
-            'description'   => 'sometimes|string',
+            'description'   => 'sometimes|nullable|string',
             'type'          => ['required', Rule::enum(Type::class)],
             'semester_id'   => 'required|integer',
         ];

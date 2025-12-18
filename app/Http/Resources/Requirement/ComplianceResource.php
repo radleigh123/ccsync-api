@@ -30,6 +30,9 @@ class ComplianceResource extends JsonResource
             'member'        => new MemberResource($this->whenLoaded('member')),
             'audits'        => new ComplianceAuditCollection($this->whenLoaded('audits')),
             'documents'     => new ComplianceDocumentCollection($this->whenLoaded('documents')),
+
+            'created_at'  => $this->created_at,
+            'updated_at'  => $this->updated_at,
         ];
     }
 }

@@ -35,11 +35,18 @@ class RequirementController extends Controller
      */
     public function store(StoreRequirementRequest $request)
     {
-        $req = $this->service->create($request->validated());
-        return $this->success(
-            $req->toResource(),
-            201,
-        );
+        try {
+            $req = $this->service->create($request->validated());
+            return $this->success(
+                $req->toResource(),
+                201,
+            );
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500,
+            );
+        }
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Requirement;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Requirement\OfferingCollection;
 use App\Models\Offering;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -16,7 +17,8 @@ class OfferingController extends Controller
     {
         // return new RequirementComplianceResource($compliance->load(['offering','documents']));
         // return response()->json(['requirements' => Requirement::with('semester')->get()]);
-        return response()->json(['offerings' => Offering::all()]);
+        // return response()->json(['offerings' => Offering::with('requirement')->get()]);
+        return new OfferingCollection(Offering::all());
     }
 
     /**
