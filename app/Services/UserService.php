@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -223,11 +224,7 @@ class UserService
 
     public function findSchoolId(string $schoolIdNumber)
     {
-        try {
-            return User::where('id_school_number', $schoolIdNumber)->firstOrFail();
-        } catch (\Exception $e) {
-            throw new \Exception("Failed to find user school ID: " . $e->getMessage(), 500);
-        }
+        return User::with('member')->where('id_school_number', $schoolIdNumber)->firstOrFail();
     }
 
     public function resetPasswordLink(array $data)

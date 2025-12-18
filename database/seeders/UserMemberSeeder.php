@@ -70,7 +70,7 @@ class UserMemberSeeder extends Seeder
         ]);
 
         $student = User::factory()->create([
-            'display_name' => 'Student Student',
+            'display_name' => 'Student.Student',
             'email' => 'localstudent@student.com',
         ]);
         $student->assignRole($studentRole);
@@ -83,7 +83,7 @@ class UserMemberSeeder extends Seeder
         ]);
 
         $student = User::factory()->create([
-            'display_name'  => 'Keene Inting',
+            'display_name'  => 'Keene.Inting',
             'email'         => 'keane@gmail.com',
             'firebase_uid'  => 'IkfoLmmyrWfLQ3eKkYPjOVKXMdv2',
             'avatar_path' => 'profile_pictures/4YoGW3h4kl7rEFGVMZeJtNB0iewFzaGdF046xJ1P.jpg',

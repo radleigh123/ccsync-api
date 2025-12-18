@@ -149,17 +149,30 @@ class MemberController extends Controller
      */
     public function checkMemberRegistration(Request $request, string $memberId)
     {
-        $eventId = $request->input('event_id');
-        $event = $this->service->checkEventRegistration($memberId, $eventId);
-        $msgResult = is_null($event) ?
-            "Member is not registered to this event."
-            :
-            "Member is registered to this event.";
+        try {
+            $eventId = $request->input('event_id');
+            $event = $this->service->checkEventRegistration($memberId, $eventId);
+            $msgResult = "";
 
-        return $this->success(
-            message: $msgResult,
-            code: 200,
-        );
+            if (! is_null($event)) {
+                $msgResult = "Member is registered to this event.";
+                return $this->success(
+                    message: $msgResult,
+                    code: 200,
+                );
+            } else {
+                $msgResult = "Member is not registered to this event.";
+                return $this->error(
+                    message: $msgResult,
+                    code: 409,
+                );
+            }
+        } catch (\Exception $e) {
+            return $this->error(
+                message: $e->getMessage(),
+                code: 500,
+            );
+        }
     }
 
     /**

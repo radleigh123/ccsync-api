@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\User;
 
+use App\Http\Resources\Member\MemberResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,6 +23,8 @@ class UserResource extends JsonResource
             'id_school_number'  => $this->id_school_number,
             'roles'             => $this->getRoleNames(),
             'permissions'       => $this->getAllPermissions()->pluck('name'),
+
+            'member'            => new MemberResource($this->whenLoaded('member')),
         ];
     }
 }

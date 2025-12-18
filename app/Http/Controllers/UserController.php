@@ -9,6 +9,7 @@ use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\User\UserCollection;
 use App\Http\Resources\User\UserResource;
 use App\Services\UserService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -134,8 +135,24 @@ class UserController extends Controller
 
     public function findUserSchoolId(Request $request)
     {
-        $user = $this->service->findSchoolId($request->id_school_number);
-        return new UserResource($user);
+        // $user = $this->service->findSchoolId($request->id_school_number);
+        // return new UserResource($user);
+        try {
+            $idSchoolNumber = $request->input('id_school_number', 1);
+            if ($idSchoolNumber == 1) {
+                return $this->error(message: "Please provide a valid school ID number.", code: 400);
+            }
+            $user = $this->service->findSchoolId($request->id_school_number);
+            return $this->success(
+                new UserResource($user),
+                200,
+                "Successfully found user with school ID {$request->id_school_number}"
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->error(message: "User ID does not exist.", code: 404);
+        } catch (\Exception $e) {
+            return $this->error(message: $e->getMessage(), code: 500);
+        }
     }
 
     /* public function adminDashboard(Request $request)
