@@ -176,7 +176,7 @@ class UserMemberSeeder extends Seeder
             'email'         => 'vice-president-internal@gmail.com',
             'password'      => '123456',
             'firebase_uid'  => 'ji31DOct3TYBiPjH24X4VP6yze23',
-            'avatar_path'   => 'profile_pictures/a2l8JI6xxGO9NPwzYMTEMtoRLMKBIPZyYbMDlAoS.jpg',
+            'avatar_path'   => 'profile_pictures/jqpMPYTljGrw9MF7kVoIgekpgxvWLFpEbwdaTxlP.jpg',
         ]);
         $admin2->assignRole([$studentRole, $genOfficerRole, $vicePresidentInternalRole]);
         Member::factory()->create([
@@ -195,7 +195,7 @@ class UserMemberSeeder extends Seeder
             'email'         => 'vice-president-external@gmail.com',
             'password'      => '123456',
             'firebase_uid'  => 'jSqpnGytRMX7FrWYAmIqlxt9w3k2',
-            'avatar_path'   => 'profile_pictures/a2l8JI6xxGO9NPwzYMTEMtoRLMKBIPZyYbMDlAoS.jpg',
+            'avatar_path'   => 'profile_pictures/Aq7jVLEw6hbT3julklxZPBub8gZ6vVMInKdWB8n7.jpg',
         ]);
         $admin3->assignRole([$studentRole, $genOfficerRole, $vicePresidentExternalRole]);
         Member::factory()->create([
